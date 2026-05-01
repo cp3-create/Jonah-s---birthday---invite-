@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#e62429">
+<title>Jonah and Friends · Amazing Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bowlby+One&family=Russo+One&display=swap" rel="stylesheet">
+<!-- Firebase v9 compat -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#000;font-family:'Russo One',sans-serif;color:#fff;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+.stage{position:fixed;inset:0;display:grid;place-items:center;background:#000}
+.canvas-wrap{position:relative;width:min(100vw,56.25dvh);height:min(100dvh,177.78vw);max-height:100dvh;overflow:hidden;background:#fff;box-shadow:0 0 50px rgba(255,235,59,.4)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.screen.active{display:flex}
+/* Fullscreen pages live outside the canvas-wrap so they use the entire device viewport */
+.fullscreen-screen{position:fixed;inset:0;display:none;background:radial-gradient(circle at 50% 30%,rgba(255,235,59,.5),transparent 60%),linear-gradient(180deg,#4fc3f7,#fff59d);overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:100;padding:max(20px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom))}
+.fullscreen-screen.active{display:flex;justify-content:center}
+.fs-inner{display:flex;flex-direction:column;align-items:center;width:100%;max-width:520px;margin:0 auto}
+.btn-yellow{background:linear-gradient(180deg,#ffeb3b,#ff8f00)!important;color:#fff!important;-webkit-text-stroke:1.5px #000;text-shadow:2px 2px 0 #000}
+
+/* TITLE */
+#titleScreen{background:linear-gradient(180deg,#ff5252 0%,#ff8a65 30%,#ffd54f 70%,#fff59d 100%);overflow:hidden}
+.burst-bg{position:absolute;inset:-30%;background:conic-gradient(from 0,#ffeb3b 0,#ff5252 30deg,#ffeb3b 60deg,#ff5252 90deg,#ffeb3b 120deg,#ff5252 150deg,#ffeb3b 180deg,#ff5252 210deg,#ffeb3b 240deg,#ff5252 270deg,#ffeb3b 300deg,#ff5252 330deg,#ffeb3b 360deg);opacity:.22;animation:spinSlow 30s linear infinite}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+.halftone{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(0,0,0,.2) 1px,transparent 1.5px);background-size:5px 5px;mix-blend-mode:multiply;opacity:.3;z-index:1}
+.title-stack{position:relative;z-index:5;text-align:center;padding:0 8px}
+.pretitle{display:inline-block;font-family:'Bangers',cursive;font-size:clamp(13px,2vh,18px);color:#fff;text-shadow:2px 2px 0 #000;letter-spacing:5px;background:#e62429;padding:5px 14px;transform:rotate(-3deg) skew(-5deg);border:3px solid #000;box-shadow:4px 4px 0 #000;margin-bottom:14px;animation:popIn .6s .2s backwards}
+.gt{font-family:'Bowlby One',sans-serif;line-height:.88;letter-spacing:1px;animation:smashIn .8s .5s backwards}
+.gt-1{font-size:clamp(38px,7.5vh,64px);background:linear-gradient(180deg,#fff,#ffeb3b 50%,#ff8f00);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:3px #000;color:transparent;text-shadow:6px 6px 0 #b71c1c,8px 8px 0 #000;display:block;transform:rotate(-2deg)}
+.gt-2{font-size:clamp(20px,3.2vh,28px);color:#fff;-webkit-text-stroke:2px #000;text-shadow:4px 4px 0 #1565c0,5px 5px 0 #000;display:block;transform:rotate(1deg);margin:8px 0}
+.gt-3{font-size:clamp(28px,5.5vh,46px);background:linear-gradient(180deg,#fff 30%,#ce93d8 70%,#7b1fa2);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:3px #000;color:transparent;text-shadow:5px 5px 0 #4a148c,7px 7px 0 #000;display:block;transform:rotate(-1deg)}
+.subtitle{font-family:'Bangers',cursive;font-size:clamp(12px,1.8vh,16px);color:#000;letter-spacing:3px;margin:14px 0 18px;animation:popIn .6s 1s backwards}
+.subtitle .star{color:#e62429}
+@keyframes popIn{from{opacity:0;transform:translateY(-15px) scale(.8)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes smashIn{0%{opacity:0;transform:scale(0) rotate(-15deg)}60%{opacity:1;transform:scale(1.15) rotate(3deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.hero-trio{display:flex;gap:6px;justify-content:center;margin-bottom:18px;animation:popIn .8s 1.2s backwards}
+.hero-slot{background:#fff;border:4px solid #000;border-radius:10px;padding:5px;box-shadow:4px 4px 0 #000}
+.hero-slot:nth-child(1){animation:bob 2s infinite ease-in-out;transform:rotate(-3deg)}
+.hero-slot:nth-child(2){animation:bob 2s .3s infinite ease-in-out;transform:scale(1.1)}
+.hero-slot:nth-child(3){animation:bob 2s .6s infinite ease-in-out;transform:rotate(3deg)}
+.hero-slot svg{display:block}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.btn{font-family:'Bowlby One',sans-serif;background:linear-gradient(180deg,#ffeb3b,#ff8f00);color:#fff;-webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000;border:4px solid #000;padding:13px 32px;font-size:clamp(17px,2.6vh,22px);letter-spacing:2px;cursor:pointer;box-shadow:6px 6px 0 #000;transition:transform .1s,box-shadow .1s}
+.btn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 #000}
+.btn-pulse{animation:btnPulse 1.2s infinite,popIn .6s 1.4s backwards}
+@keyframes btnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.btn-link{background:none;border:none;color:#000;font-family:'Bangers',cursive;font-size:clamp(12px,1.8vh,15px);letter-spacing:2px;cursor:pointer;text-decoration:underline;margin-top:14px;text-shadow:1px 1px 0 #fff}
+
+/* CHAR SELECT */
+#charScreen{background:linear-gradient(180deg,#4fc3f7 0%,#fff59d 100%);overflow-y:auto;justify-content:flex-start;padding-top:24px;padding-bottom:24px}
+.s-title{font-family:'Bowlby One',sans-serif;font-size:clamp(22px,4vh,32px);color:#fff;-webkit-text-stroke:2.5px #000;text-shadow:4px 4px 0 #000;letter-spacing:2px;margin-bottom:6px;text-align:center}
+.s-sub{font-family:'Bangers',cursive;font-size:clamp(12px,1.8vh,15px);letter-spacing:3px;color:#fff;text-shadow:2px 2px 0 #000;margin-bottom:18px;text-align:center}
+.char-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:380px;margin-bottom:14px}
+.char-card{background:#fff;border:4px solid #000;border-radius:12px;padding:8px 6px;text-align:center;cursor:pointer;box-shadow:5px 5px 0 #000;transition:transform .15s;position:relative}
+.char-card:active{transform:translate(2px,2px);box-shadow:3px 3px 0 #000}
+.char-card.selected{background:linear-gradient(180deg,#ffeb3b,#ffc107);transform:scale(1.05) rotate(-2deg)}
+.char-card svg{width:100%;height:auto;aspect-ratio:1;display:block}
+.char-card .name{font-family:'Bowlby One',sans-serif;font-size:clamp(10px,1.4vh,12px);color:#000;margin-top:4px;letter-spacing:1px}
+.char-card .pwr{font-family:'Bangers',cursive;font-size:clamp(8px,1.1vh,10px);color:#7b1fa2;letter-spacing:1px;margin-top:2px;line-height:1.2}
+.char-card .badge{position:absolute;top:-10px;right:-8px;background:#e62429;color:#fff;font-family:'Bangers',cursive;font-size:10px;padding:3px 7px;border-radius:8px;border:2px solid #000;letter-spacing:1px;transform:rotate(8deg);box-shadow:2px 2px 0 #000}
+.initials-input{background:#fff;border:3px solid #000;border-radius:10px;padding:10px 14px;font-family:'Bowlby One',sans-serif;font-size:18px;letter-spacing:8px;text-align:center;text-transform:uppercase;width:120px;margin-bottom:12px;box-shadow:4px 4px 0 #000;color:#000}
+.initials-label{font-family:'Bangers',cursive;font-size:clamp(12px,1.8vh,14px);color:#000;-webkit-text-stroke:.3px #fff;letter-spacing:2px;margin-bottom:6px}
+
+/* GAME */
+#gameScreen{padding:0}
+#gameCanvas{width:100%;height:100%;cursor:pointer;touch-action:none;display:block;background:#87ceeb}
+.hud{position:absolute;top:max(10px,env(safe-area-inset-top));left:10px;right:10px;display:flex;gap:5px;justify-content:space-between;z-index:5;pointer-events:none;flex-wrap:wrap}
+.hud-pill{background:#fff;border:3px solid #000;border-radius:18px;padding:4px 9px;font-family:'Bowlby One',sans-serif;font-size:clamp(10px,1.5vh,12px);letter-spacing:1px;color:#000;box-shadow:2px 2px 0 #000;white-space:nowrap}
+.power-meter{position:absolute;bottom:max(14px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#fff;border:3px solid #000;border-radius:14px;padding:6px 12px;font-family:'Bowlby One',sans-serif;font-size:11px;letter-spacing:1px;color:#000;box-shadow:3px 3px 0 #000;z-index:5;pointer-events:auto;display:flex;align-items:center;gap:8px;cursor:pointer;min-width:140px;justify-content:center}
+.power-meter.ready{background:linear-gradient(90deg,#ffeb3b,#ff5252);color:#fff;-webkit-text-stroke:1px #000;animation:readyPulse .6s infinite alternate}
+@keyframes readyPulse{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.06)}}
+.power-bar{width:60px;height:8px;background:#ddd;border:2px solid #000;border-radius:4px;overflow:hidden;position:relative}
+.power-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#ffeb3b,#ff8f00);transition:width .2s}
+.tutorial{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-2deg);background:#ffeb3b;border:4px solid #000;border-radius:12px;padding:14px 20px;text-align:center;font-family:'Bangers',cursive;font-size:clamp(13px,2vh,16px);color:#000;letter-spacing:2px;z-index:6;max-width:80%;line-height:1.5;box-shadow:6px 6px 0 #000}
+.tutorial.hidden{display:none}
+.gameover-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:7;padding:20px}
+.gameover-overlay.active{display:flex}
+.go-title{font-family:'Bowlby One',sans-serif;font-size:clamp(28px,5vh,42px);background:linear-gradient(180deg,#ffeb3b,#ff5252);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:2.5px #000;color:transparent;text-shadow:5px 5px 0 #000;margin-bottom:16px;letter-spacing:3px;animation:smashIn .6s}
+.go-stats{font-family:'Bangers',cursive;font-size:clamp(14px,2.2vh,18px);color:#fff;letter-spacing:2px;margin-bottom:18px;text-align:center;line-height:1.6}
+.go-stats .num{color:#ffeb3b;font-family:'Bowlby One';font-size:1.4em}
+.invite-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:linear-gradient(135deg,#ffd700,#ff8f00);border:5px solid #000;border-radius:14px;padding:18px 24px;text-align:center;z-index:8;box-shadow:0 0 40px rgba(255,215,0,.8),6px 6px 0 #000;pointer-events:none}
+.invite-popup.show{animation:popUnlock 2s forwards}
+.invite-popup .ip-1{font-family:'Bangers',cursive;font-size:22px;letter-spacing:3px;color:#b71c1c;margin-bottom:4px}
+.invite-popup .ip-2{font-family:'Bowlby One',sans-serif;font-size:24px;color:#000;-webkit-text-stroke:1px #fff;text-shadow:2px 2px 0 #fff;letter-spacing:2px}
+@keyframes popUnlock{0%{transform:translate(-50%,-50%) scale(0) rotate(-15deg)}30%{transform:translate(-50%,-50%) scale(1.2) rotate(8deg)}50%{transform:translate(-50%,-50%) scale(1) rotate(-3deg);opacity:1}80%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-3deg)}100%{transform:translate(-50%,-50%) scale(.5) rotate(0);opacity:0}}
+.mute-btn{position:absolute;top:max(10px,env(safe-area-inset-top));right:10px;width:34px;height:34px;background:#fff;border:3px solid #000;border-radius:50%;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:2px 2px 0 #000;padding:0}
+.mute-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 #000}
+
+/* WIN */
+#winScreen{justify-content:flex-start}
+.complete-banner{font-family:'Bowlby One',sans-serif;font-size:42px;color:#ffeb3b;-webkit-text-stroke:2.5px #000;text-shadow:5px 5px 0 #b71c1c,7px 7px 0 #000;letter-spacing:2px;margin-bottom:14px;text-align:center;transform:rotate(-2deg);animation:smashIn .7s backwards}
+.score-pill{background:#000;color:#ffeb3b;font-family:'Bowlby One',sans-serif;font-size:18px;padding:9px 22px;border-radius:22px;border:3px solid #ffeb3b;letter-spacing:2px;margin-bottom:18px;box-shadow:0 0 20px rgba(255,235,59,.5)}
+.score-pill .sn{color:#fff;font-size:1.3em}
+.invite-card{background:linear-gradient(135deg,#1a237e,#283593 50%,#1a237e);border:5px solid #000;border-radius:16px;padding:24px 20px;width:100%;max-width:480px;text-align:center;box-shadow:8px 8px 0 #000;margin-bottom:18px;position:relative;animation:fadeUp .5s .2s backwards}
+.invite-card::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1.5px);background-size:7px 7px;pointer-events:none;border-radius:11px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.invited-tag{display:inline-block;background:#e62429;color:#fff;font-family:'Bowlby One',sans-serif;font-size:13px;padding:6px 18px;letter-spacing:2px;transform:skew(-8deg);border:2px solid #000;box-shadow:3px 3px 0 #000;margin-bottom:14px}
+.invited-tag span{display:inline-block;transform:skew(8deg)}
+.invite-name{font-family:'Bowlby One',sans-serif;font-size:60px;line-height:1;color:#ffeb3b;-webkit-text-stroke:2px #b71c1c;text-shadow:4px 4px 0 #000;letter-spacing:1px;margin-bottom:6px;display:block}
+.invite-age{font-family:'Bowlby One',sans-serif;font-size:30px;line-height:1;color:#ce93d8;-webkit-text-stroke:1.5px #000;text-shadow:3px 3px 0 #000;letter-spacing:2px;margin-bottom:14px;display:block}
+.invite-when{font-family:'Bangers',cursive;font-size:20px;letter-spacing:1.5px;color:#fff;text-shadow:2px 2px 0 #000;margin-bottom:12px;display:block;line-height:1.3}
+.invite-where{background:#ffeb3b;color:#000;font-family:'Bowlby One',sans-serif;font-size:13px;letter-spacing:1px;padding:10px 14px;display:inline-block;border:2px solid #000;margin:0 auto 12px;line-height:1.5}
+.invite-rsvp{font-family:'Bangers',cursive;font-size:17px;letter-spacing:1.5px;color:#fff;text-shadow:2px 2px 0 #000;display:block;margin-bottom:12px}
+.invite-rsvp a{color:#4fc3f7;text-decoration:none}
+.invite-gifts{margin-top:6px;padding:12px 14px;background:rgba(255,235,59,.12);border:2px dashed #ffeb3b;border-radius:10px;font-family:'Bangers',cursive;font-size:15px;letter-spacing:1.5px;color:#ffeb3b;text-shadow:1px 1px 0 #000;line-height:1.5}
+.invite-gifts span{display:block;color:#fff;font-family:'Bowlby One',sans-serif;font-size:14px;letter-spacing:2px;margin-top:5px}
+.ticket-reveal{font-family:'Bowlby One',sans-serif;font-size:20px;color:#fff;-webkit-text-stroke:1.5px #000;text-shadow:3px 3px 0 #b71c1c,4px 4px 0 #000;letter-spacing:2px;margin-bottom:10px;text-align:center;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.ticket{width:100%;max-width:480px;flex-shrink:0;background:linear-gradient(135deg,#ffd700,#ffeb3b 30%,#ffc107 60%,#ff8f00);border:4px solid #000;border-radius:16px;padding:18px;position:relative;box-shadow:0 0 50px rgba(255,215,0,.7),8px 8px 0 #000;margin-bottom:14px;animation:unlock 1s 1s backwards;overflow:hidden;cursor:pointer;transition:transform .15s;min-height:140px}
+.ticket:active{transform:translate(3px,3px);box-shadow:0 0 50px rgba(255,215,0,.7),5px 5px 0 #000}
+.ticket::before,.ticket::after{content:'';position:absolute;width:22px;height:22px;background:#fff8d6;border-radius:50%;border:3px solid #000;top:50%;transform:translateY(-50%)}
+.ticket::before{left:-13px}
+.ticket::after{right:-13px}
+@keyframes unlock{0%{opacity:0;transform:translateY(40px) rotate(-5deg) scale(.85)}50%{opacity:1;transform:translateY(-12px) rotate(3deg) scale(1.06)}100%{opacity:1;transform:translateY(0) rotate(0) scale(1)}}
+.ticket-shine{position:absolute;top:-50%;left:-50%;width:50%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);transform:rotate(25deg);animation:shine 4s 2s infinite;pointer-events:none}
+@keyframes shine{0%{left:-100%}100%{left:200%}}
+.ticket-content{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;position:relative;z-index:2}
+.ticket-info{text-align:left;flex:1}
+.ticket-label{font-family:'Bangers',cursive;font-size:13px;color:#b71c1c;letter-spacing:2px;display:block}
+.ticket-title{font-family:'Bowlby One',sans-serif;font-size:18px;color:#000;line-height:1.1;letter-spacing:1px;margin:4px 0 8px;display:block}
+.ticket-meta{font-family:'Russo One',sans-serif;font-size:13px;color:#3e2723;line-height:1.5;font-weight:bold;display:block}
+.ticket-meta strong{color:#000;display:block;margin-bottom:2px}
+.ticket-num{font-family:'Russo One',sans-serif;font-size:11px;color:#5d4037;margin-top:8px;letter-spacing:1px;display:block}
+.ticket-cal{display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;border:3px solid #000;border-radius:10px;padding:10px 14px;min-width:96px;box-shadow:3px 3px 0 #000}
+.cal-icon{font-size:36px;line-height:1;margin-bottom:4px}
+.cal-label{font-family:'Bangers',cursive;font-size:11px;color:#b71c1c;letter-spacing:1.5px;text-align:center;line-height:1.2}
+.tap-hint{font-family:'Bangers',cursive;font-size:14px;color:#1565c0;text-align:center;margin-bottom:14px;letter-spacing:2px;animation:pulse 1.5s infinite}
+.tap-hint .arrow{display:inline-block;animation:nudge 1s infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.lb-section{width:100%;max-width:460px;margin-bottom:16px}
+.lb-title{font-family:'Bowlby One',sans-serif;font-size:clamp(16px,2.5vh,20px);color:#fff;-webkit-text-stroke:2px #000;text-shadow:3px 3px 0 #000;letter-spacing:2px;text-align:center;margin-bottom:10px;transform:rotate(-1deg)}
+.lb-list{background:#fff;border:4px solid #000;border-radius:10px;padding:10px;box-shadow:5px 5px 0 #000;max-height:none;overflow-y:visible}
+.lb-row{display:grid;grid-template-columns:36px 1fr auto auto;gap:10px;align-items:center;padding:9px 10px;border-bottom:2px dashed #ddd;font-family:'Russo One',sans-serif;font-size:15px;color:#000}
+.lb-row:last-child{border-bottom:none}
+.lb-row.you{background:#ffeb3b;border-radius:6px;border-bottom:none;font-weight:bold}
+.lb-rank{font-family:'Bowlby One',sans-serif;font-size:18px;color:#b71c1c;text-align:center}
+.lb-rank.gold{color:#ff8f00}.lb-rank.silver{color:#757575}.lb-rank.bronze{color:#8d6e63}
+.lb-init{font-family:'Bowlby One',sans-serif;letter-spacing:2px;font-size:17px}
+.lb-cakes{font-size:13px;color:#666}
+.lb-score{font-family:'Bowlby One',sans-serif;font-size:17px;color:#1565c0}
+.lb-row.you .lb-score{color:#b71c1c}
+.lb-empty{text-align:center;padding:14px;font-family:'Bangers',cursive;color:#999;letter-spacing:2px;font-size:14px}
+.lb-status{font-family:'Russo One',sans-serif;font-size:9px;color:#666;text-align:center;margin-top:4px;font-style:italic}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;width:100%;max-width:460px}
+.btn-2{font-family:'Bowlby One',sans-serif;background:#fff;color:#000;border:3px solid #000;padding:12px 14px;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:4px 4px 0 #000;flex:1;min-width:110px}
+.btn-2:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.footer-note{font-family:'Bangers',cursive;font-size:10px;letter-spacing:1.5px;color:#1565c0;text-align:center;-webkit-text-stroke:.3px #fff}
+.toast{position:fixed;top:60%;left:50%;transform:translate(-50%,-50%) scale(0);background:#000;color:#ffeb3b;font-family:'Bangers',cursive;font-size:18px;letter-spacing:2px;padding:14px 22px;border-radius:10px;border:3px solid #ffeb3b;z-index:1000;pointer-events:none;box-shadow:0 0 30px rgba(255,235,59,.6);text-align:center}
+.toast.show{animation:toastPop 1.8s forwards}
+@keyframes toastPop{0%{transform:translate(-50%,-50%) scale(0)}20%{transform:translate(-50%,-50%) scale(1.1)}30%{transform:translate(-50%,-50%) scale(1)}80%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(.8);opacity:0}}
+
+/* FIREBASE CONFIG MODAL */
+.fb-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.fb-modal.active{display:flex}
+.fb-card{background:#fff;color:#000;border:4px solid #000;border-radius:14px;padding:20px;max-width:380px;width:100%;box-shadow:8px 8px 0 #000;max-height:90vh;overflow-y:auto}
+.fb-card h2{font-family:'Bowlby One',sans-serif;font-size:18px;letter-spacing:2px;margin-bottom:8px;color:#e62429}
+.fb-card p{font-family:'Russo One',sans-serif;font-size:12px;line-height:1.5;margin-bottom:8px}
+.fb-card code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px;display:block;margin:4px 0;word-break:break-all}
+.fb-card input,.fb-card textarea{width:100%;padding:8px;border:2px solid #000;border-radius:6px;font-family:monospace;font-size:11px;margin-bottom:8px}
+.fb-card textarea{min-height:80px;resize:vertical}
+.fb-actions{display:flex;gap:8px;margin-top:12px}
+.fb-btn{font-family:'Bowlby One',sans-serif;background:#ffeb3b;border:3px solid #000;padding:8px 14px;font-size:13px;letter-spacing:1px;cursor:pointer;box-shadow:3px 3px 0 #000;flex:1}
+.fb-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.fb-btn.secondary{background:#fff}
+.fb-step{background:#fffde7;border-left:4px solid #ffc107;padding:8px 10px;margin:8px 0;font-size:11px;font-family:'Russo One',sans-serif;line-height:1.5}
+.fb-step b{color:#e62429}
+</style>
+</head>
+<body>
+
+<div class="stage">
+<div class="canvas-wrap">
+
+<!-- TITLE -->
+<div id="titleScreen" class="screen active">
+<div class="burst-bg"></div>
+<div class="halftone"></div>
+<div class="title-stack">
+<div class="pretitle">★ AN INVITE ★</div>
+<div class="gt">
+<span class="gt-1">JONAH</span>
+<span class="gt-2">AND FRIENDS</span>
+<span class="gt-3">AMAZING<br>ADVENTURE</span>
+</div>
+<div class="subtitle"><span class="star">★</span> SWING · COLLECT · DODGE <span class="star">★</span></div>
+<div class="hero-trio" id="heroTrio"></div>
+<button class="btn btn-pulse" onclick="goCharSelect()">START</button>
+<br>
+<button class="btn-link" onclick="showLeaderboardOnly()">🏆 LEADERBOARD</button>
+<br>
+<button class="btn-link" onclick="openFirebaseSetup()" style="font-size:10px;opacity:.6">⚙ host setup</button>
+</div>
+</div>
+
+<!-- CHAR SELECT -->
+<div id="charScreen" class="screen">
+<div class="s-title">PICK YOUR HERO</div>
+<div class="s-sub">★ EACH HAS A SUPERPOWER ★</div>
+<div class="char-grid" id="charGrid"></div>
+<div class="initials-label">YOUR INITIALS (LEADERBOARD)</div>
+<input type="text" class="initials-input" id="initialsInput" maxlength="3" placeholder="ABC" autocomplete="off">
+<button class="btn" id="startBtn" onclick="startGame()" disabled style="opacity:.5">SWING INTO ACTION</button>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen">
+<canvas id="gameCanvas"></canvas>
+<div class="hud">
+<div class="hud-pill">🎂 <span id="cakeCount">0</span>/8</div>
+<div class="hud-pill">⭐ <span id="scoreCount">0</span></div>
+<div class="hud-pill">📏 <span id="distCount">0</span>M</div>
+</div>
+<button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔊</button>
+<div class="power-meter" id="powerMeter">
+<span id="powerLabel">POWER</span>
+<div class="power-bar"><div class="power-fill" id="powerFill" style="width:0%"></div></div>
+</div>
+<div class="tutorial" id="tutorial">
+👆 TAP & HOLD TO SWING<br>
+👆 RELEASE TO LEAP<br>
+🎂 TAP CAKES TO GRAB<br>
+<span style="color:#388e3c">⚠ AVOID GREEN SLIME!</span>
+</div>
+<div class="invite-popup" id="invitePopup">
+<div class="ip-1">★ INVITE UNLOCKED ★</div>
+<div class="ip-2">YOU EARNED IT!</div>
+</div>
+<div class="gameover-overlay" id="gameOverOverlay">
+<div class="go-title" id="goTitle">OOPS!</div>
+<div class="go-stats" id="goStats"></div>
+<button class="btn" onclick="restartGame()">TRY AGAIN</button>
+<br><br>
+<button class="btn-2" onclick="restartFromTitle()" style="background:#fff;color:#000">🏠 HOME</button>
+</div>
+</div>
+
+</div><!-- /canvas-wrap -->
+</div><!-- /stage -->
+
+<!-- WIN: INVITE PAGE (full viewport, independent of canvas-wrap) -->
+<div id="winScreen" class="fullscreen-screen">
+<div class="fs-inner">
+<div class="complete-banner">★ YOU DID IT! ★</div>
+<div class="score-pill">SCORE <span class="sn" id="finalScore">0</span></div>
+<div class="invite-card">
+<div class="invited-tag"><span>YOU ARE INVITED TO</span></div>
+<div class="invite-name">JONAH'S</div>
+<div class="invite-age">2<sup style="font-size:.55em">ND</sup> BIRTHDAY</div>
+<div class="invite-when">JUNE 20, 2026 · 5:00 PM</div>
+<div class="invite-where">WACKY TACKY<br>7351 GALILEE RD #160<br>ROSEVILLE, CA 95678</div>
+<div class="invite-rsvp">RSVP · <a href="tel:5104352135">510-435-2135</a></div>
+<div class="invite-gifts">🎁 GIFT IDEAS 🎁<br><span>SHOE SIZE 8C · CLOTHING 3T</span></div>
+</div>
+<div class="ticket-reveal">🎟️ GOLDEN TICKET 🎟️</div>
+<div class="ticket" onclick="addToCalendar()">
+<div class="ticket-shine"></div>
+<div class="ticket-content">
+<div class="ticket-info">
+<div class="ticket-label">★ ADMIT ONE ★</div>
+<div class="ticket-title">JONAH'S 2ND BIRTHDAY</div>
+<div class="ticket-meta"><strong>JUN 20, 2026 · 5:00 PM</strong>Wacky Tacky · Roseville</div>
+<div class="ticket-num" id="ticketNum">TKT #000000</div>
+</div>
+<div class="ticket-cal">
+<div class="cal-icon">📅</div>
+<div class="cal-label">TAP TO<br>ADD</div>
+</div>
+</div>
+</div>
+<div class="tap-hint"><span class="arrow">👆</span> TAP TICKET TO ADD TO CALENDAR</div>
+<div class="action-row">
+<button class="btn-2" onclick="addToCalendar()">📅 ADD EVENT</button>
+<button class="btn-2 btn-yellow" onclick="goLeaderboard()">🏆 LEADERBOARD</button>
+</div>
+<div class="action-row">
+<button class="btn-2" onclick="restartFromTitle()">🔄 PLAY AGAIN</button>
+</div>
+<div class="footer-note">★ YOUR PRESENCE IS THE BEST GIFT ★</div>
+</div>
+</div>
+
+<!-- WIN: LEADERBOARD PAGE (separate screen) -->
+<div id="lbScreen" class="fullscreen-screen">
+<div class="fs-inner">
+<div class="complete-banner" style="font-size:36px">🏆 LEADERBOARD 🏆</div>
+<div class="score-pill">YOUR SCORE <span class="sn" id="lbFinalScore">0</span></div>
+<div class="lb-section" style="max-width:520px">
+<div class="lb-list" id="lbList"><div class="lb-empty">Loading...</div></div>
+<div class="lb-status" id="lbStatus"></div>
+</div>
+<div class="action-row">
+<button class="btn-2 btn-yellow" onclick="goWinInvite()">🎟️ VIEW INVITE</button>
+<button class="btn-2" onclick="restartFromTitle()">🔄 PLAY AGAIN</button>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE SETUP MODAL (for the host only) -->
+<div class="fb-modal" id="fbModal">
+<div class="fb-card">
+<h2>🔥 FIREBASE LEADERBOARD SETUP</h2>
+<p>Connect your Firebase project so all players share one global leaderboard.</p>
+<div class="fb-step"><b>STEP 1:</b> Go to console.firebase.google.com → create or pick a project → click "Build" → "Realtime Database" → "Create Database" → start in test mode (you can lock it later)</div>
+<div class="fb-step"><b>STEP 2:</b> Click the gear icon → "Project settings" → scroll to "Your apps" → click the web icon &lt;/&gt; → register an app called "jonah-game" → copy the firebaseConfig object</div>
+<div class="fb-step"><b>STEP 3:</b> Paste the entire firebaseConfig object below (it should look like <code>const firebaseConfig = {{ apiKey: ... }}</code>):</div>
+<textarea id="fbConfigInput" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "...firebaseapp.com",
+  "databaseURL": "https://....firebaseio.com",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+<p style="font-size:10px;color:#666">Saved to this device only. Once saved, the leaderboard works for everyone who plays this link.</p>
+<div class="fb-actions">
+<button class="fb-btn" onclick="saveFirebaseConfig()">SAVE & CONNECT</button>
+<button class="fb-btn secondary" onclick="closeFirebaseSetup()">CANCEL</button>
+</div>
+<div class="fb-actions" style="margin-top:6px">
+<button class="fb-btn secondary" onclick="clearFirebaseConfig()" style="font-size:11px">RESET</button>
+</div>
+</div>
+</div>
+
+<script>
+
+
+/* ============================================
+   PARTY DATA
+============================================ */
+const PARTY = {
+  name: "Jonah",
+  startUTC: "20260621T000000Z",
+  endUTC: "20260621T030000Z"
+};
+
+/* ============================================
+   STATE
+============================================ */
+let selectedChar = 1; // 0=Night, 1=Jonah(default), 2=Ghost
+let playerInitials = "";
+let canvas, ctx, logicalW = 0, logicalH = 0;
+let rafId = null;
+let game = null;
+let muted = false;
+
+/* ============================================
+   AUDIO (WebAudio synthesis - no external files)
+============================================ */
+let audioCtx = null;
+let musicGain = null;
+let musicNodes = [];
+let musicPlaying = false;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      musicGain = audioCtx.createGain();
+      musicGain.gain.value = 0.18;
+      musicGain.connect(audioCtx.destination);
+    } catch(e) { console.error('Audio init failed', e); }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    // iOS requires this in a user gesture handler. Returns a promise we silently chain.
+    audioCtx.resume().catch(()=>{});
+  }
+  // Play a tiny silent click to "unlock" iOS audio
+  if (audioCtx && !audioCtx._unlocked) {
+    try {
+      const buf = audioCtx.createBuffer(1, 1, 22050);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(audioCtx.destination);
+      src.start(0);
+      audioCtx._unlocked = true;
+    } catch(e) {}
+  }
+}
+
+function playSFX(type) {
+  if (muted || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  if (type === 'cake') {
+    o.frequency.setValueAtTime(800, now);
+    o.frequency.exponentialRampToValueAtTime(1600, now + 0.1);
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    o.start(now); o.stop(now + 0.15);
+  } else if (type === 'thwip') {
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(400, now);
+    o.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+    g.gain.setValueAtTime(0.1, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    o.start(now); o.stop(now + 0.1);
+  } else if (type === 'leap') {
+    o.type = 'sine';
+    o.frequency.setValueAtTime(300, now);
+    o.frequency.linearRampToValueAtTime(600, now + 0.15);
+    g.gain.setValueAtTime(0.08, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    o.start(now); o.stop(now + 0.15);
+  } else if (type === 'hit') {
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(200, now);
+    o.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+    g.gain.setValueAtTime(0.2, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    o.start(now); o.stop(now + 0.3);
+  } else if (type === 'slime') {
+    o.type = 'square';
+    o.frequency.setValueAtTime(150, now);
+    o.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    o.start(now); o.stop(now + 0.2);
+  } else if (type === 'power') {
+    [400, 600, 800, 1200].forEach((f, i) => {
+      const oo = audioCtx.createOscillator();
+      const gg = audioCtx.createGain();
+      oo.connect(gg); gg.connect(audioCtx.destination);
+      oo.frequency.value = f;
+      gg.gain.setValueAtTime(0.08, now + i * 0.05);
+      gg.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.2);
+      oo.start(now + i * 0.05); oo.stop(now + i * 0.05 + 0.2);
+    });
+  } else if (type === 'win') {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      const oo = audioCtx.createOscillator();
+      const gg = audioCtx.createGain();
+      oo.connect(gg); gg.connect(audioCtx.destination);
+      oo.type = 'triangle';
+      oo.frequency.value = f;
+      gg.gain.setValueAtTime(0.12, now + i * 0.1);
+      gg.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3);
+      oo.start(now + i * 0.1); oo.stop(now + i * 0.1 + 0.3);
+    });
+  }
+}
+
+function startMusic() {
+  if (muted || !audioCtx || musicPlaying) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  musicPlaying = true;
+
+  // Heroic action-theme: bass riff + chord stabs + lead melody
+  // Key: A minor (heroic feel)
+  const beat = 0.16; // ~94 BPM, 16th notes
+  // Bass line (A minor groove): A2 A2 E2 G2 / A2 A2 E2 D2
+  const bassPattern = [110, 110, 82.4, 98, 110, 110, 82.4, 73.4];
+  // Chord stabs (Am-F-C-G): root note for now
+  const chordRoot = [220, 174.6, 261.6, 196];
+  // Lead melody (memorable hero motif): A C E A G E C, repeat
+  const leadPattern = [
+    [440, 1], [523.25, 1], [659.25, 1], [880, 2],
+    [783.99, 1], [659.25, 1], [523.25, 2],
+    [440, 1], [523.25, 1], [659.25, 1], [880, 2],
+    [987.77, 1], [880, 1], [659.25, 2]
+  ];
+
+  function scheduleLoop(startTime) {
+    if (!musicPlaying || muted) return;
+
+    // BASS - drives the energy
+    bassPattern.forEach((freq, i) => {
+      const t = startTime + i * beat;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = freq;
+      // Lowpass for warmth
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 600;
+      o.connect(lp); lp.connect(g); g.connect(musicGain);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.6, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.9);
+      o.start(t); o.stop(t + beat);
+      musicNodes.push(o);
+    });
+
+    // CHORD STABS - on every beat
+    chordRoot.forEach((root, i) => {
+      const t = startTime + i * beat * 2;
+      // Triad: root, third, fifth
+      const triad = [root, root * 1.2, root * 1.5]; // approximate minor triad
+      triad.forEach(f => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'square';
+        o.frequency.value = f;
+        o.connect(g); g.connect(musicGain);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.08, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        o.start(t); o.stop(t + 0.3);
+        musicNodes.push(o);
+      });
+    });
+
+    // LEAD MELODY (high, catchy)
+    let leadT = startTime;
+    leadPattern.forEach(([freq, dur]) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = freq;
+      o.connect(g); g.connect(musicGain);
+      g.gain.setValueAtTime(0, leadT);
+      g.gain.linearRampToValueAtTime(0.18, leadT + 0.01);
+      g.gain.linearRampToValueAtTime(0.14, leadT + beat * dur * 0.7);
+      g.gain.exponentialRampToValueAtTime(0.001, leadT + beat * dur * 0.95);
+      o.start(leadT); o.stop(leadT + beat * dur);
+      musicNodes.push(o);
+      leadT += beat * dur;
+    });
+
+    // Snare on 2 and 4
+    [1, 3, 5, 7].forEach(i => {
+      const t = startTime + i * beat;
+      const noise = audioCtx.createBufferSource();
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) data[j] = (Math.random() - 0.5) * Math.pow(1 - j/data.length, 2);
+      noise.buffer = buf;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      noise.connect(g); g.connect(musicGain);
+      noise.start(t); noise.stop(t + 0.08);
+      musicNodes.push(noise);
+    });
+
+    const loopDur = bassPattern.length * beat;
+    setTimeout(() => scheduleLoop(startTime + loopDur), loopDur * 1000 - 80);
+  }
+  scheduleLoop(audioCtx.currentTime + 0.08);
+}
+
+function stopMusic() {
+  musicPlaying = false;
+  musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  musicNodes = [];
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  if (muted) {
+    if (musicGain) musicGain.gain.value = 0;
+    stopMusic();
+  } else {
+    if (musicGain) musicGain.gain.value = 0.12;
+    if (game && !game.won && game.player.alive) startMusic();
+  }
+}
+
+/* ============================================
+   FIREBASE
+============================================ */
+let fbApp = null;
+let fbDB = null;
+let fbReady = false;
+let fbError = null;
+
+// BAKED-IN FIREBASE CONFIG — global leaderboard for all players, no setup needed
+const FIREBASE_CONFIG_DEFAULT = {
+  apiKey: "AIzaSyBkg9sKih6dsVb-CfNqcA6kbdM2Heq8AtM",
+  authDomain: "jonah-invitation.firebaseapp.com",
+  databaseURL: "https://jonah-invitation-default-rtdb.firebaseio.com",
+  projectId: "jonah-invitation",
+  storageBucket: "jonah-invitation.firebasestorage.app",
+  messagingSenderId: "201046996081",
+  appId: "1:201046996081:web:3b6e34bba8285fa6ff17d0"
+};
+
+function initFirebase() {
+  // Use baked-in config by default; allow localStorage override for testing
+  let cfg = FIREBASE_CONFIG_DEFAULT;
+  const cfgStr = localStorage.getItem('jonah_fb_config');
+  if (cfgStr) {
+    try { cfg = JSON.parse(cfgStr); } catch(e) {}
+  }
+  // If firebase global isn't ready, retry — and try to dynamically inject scripts as a fallback
+  if (typeof firebase === 'undefined' || !firebase.initializeApp) {
+    initFirebase._retries = (initFirebase._retries || 0) + 1;
+    if (initFirebase._retries === 1) loadFirebaseScripts();
+    if (initFirebase._retries < 30) {
+      setTimeout(initFirebase, 250);
+      return;
+    }
+    fbError = 'firebase-sdk-not-loaded';
+    fbReady = false;
+    console.error('Firebase SDK never loaded after', initFirebase._retries, 'retries');
+    return;
+  }
+  try {
+    if (typeof cfg !== 'object') throw new Error('bad config');
+    if (!cfg.databaseURL && cfg.projectId) {
+      cfg.databaseURL = `https://${cfg.projectId}-default-rtdb.firebaseio.com`;
+    }
+    if (firebase.apps && firebase.apps.length > 0) {
+      fbApp = firebase.app();
+    } else {
+      fbApp = firebase.initializeApp(cfg);
+    }
+    fbDB = firebase.database();
+    fbReady = true;
+    fbError = null;
+    console.log('Firebase ready ✓');
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    fbError = e.message;
+    fbReady = false;
+  }
+}
+
+function loadFirebaseScripts() {
+  // Defensive fallback: dynamically inject Firebase SDK scripts if the head tags failed
+  if (window._fbScriptsLoading) return;
+  window._fbScriptsLoading = true;
+  const urls = [
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js'
+  ];
+  urls.forEach(src => {
+    if (!document.querySelector(`script[src="${src}"]`)) {
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      document.head.appendChild(s);
+    }
+  });
+}
+
+function openFirebaseSetup() {
+  document.getElementById('fbModal').classList.add('active');
+  const existing = localStorage.getItem('jonah_fb_config');
+  if (existing) document.getElementById('fbConfigInput').value = existing;
+}
+function closeFirebaseSetup() {
+  document.getElementById('fbModal').classList.remove('active');
+}
+function saveFirebaseConfig() {
+  let raw = document.getElementById('fbConfigInput').value.trim();
+  if (!raw) { showToast('Paste the config first'); return; }
+  // Try to extract object literal
+  try {
+    // Strip "const firebaseConfig = " prefix and trailing semicolon
+    raw = raw.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
+    // Convert JS keys to JSON keys (apiKey: -> "apiKey":)
+    let json = raw.replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":').replace(/'/g, '"').replace(/,\s*}/g, '}');
+    const obj = JSON.parse(json);
+    localStorage.setItem('jonah_fb_config', JSON.stringify(obj));
+    showToast('✓ Saved! Reloading...');
+    setTimeout(() => location.reload(), 1200);
+  } catch(e) {
+    showToast('Bad config format');
+    console.error(e);
+  }
+}
+function clearFirebaseConfig() {
+  localStorage.removeItem('jonah_fb_config');
+  document.getElementById('fbConfigInput').value = '';
+  showToast('Cleared');
+  setTimeout(() => location.reload(), 800);
+}
+
+async function submitScore(score, cakes) {
+  if (!playerInitials) {
+    console.warn('submitScore: no initials');
+    return false;
+  }
+  const entry = {
+    i: playerInitials.toUpperCase(),
+    s: Math.floor(score),
+    c: cakes,
+    t: Date.now()
+  };
+  // Always save locally as fallback
+  try {
+    let local = JSON.parse(localStorage.getItem('jonah_scores') || '[]');
+    local.push(entry);
+    local.sort((a, b) => b.s - a.s);
+    local = local.slice(0, 100);
+    localStorage.setItem('jonah_scores', JSON.stringify(local));
+  } catch(e) { console.warn('local save failed', e); }
+  // Firebase write — actually wait for it
+  if (fbReady && fbDB) {
+    try {
+      await fbDB.ref('scores').push(entry);
+      console.log('✓ Score pushed to Firebase:', entry);
+      return true;
+    } catch(e) {
+      console.error('✗ Firebase push failed:', e.message || e);
+      return false;
+    }
+  } else {
+    console.warn('Firebase not ready (fbReady:', fbReady, 'fbDB:', !!fbDB, 'fbError:', fbError, ')');
+  }
+  return false;
+}
+
+async function fetchScores() {
+  if (fbReady) {
+    try {
+      // Pull a wide history so we can dedupe per-player and find each one's best
+      const snap = await fbDB.ref('scores').orderByChild('s').limitToLast(500).once('value');
+      const arr = [];
+      snap.forEach(c => arr.push(c.val()));
+      arr.sort((a,b) => b.s - a.s);
+      return { scores: arr, source: 'global' };
+    } catch(e) {
+      console.error('Firebase fetch failed', e);
+    }
+  }
+  let local = [];
+  try { local = JSON.parse(localStorage.getItem('jonah_scores') || '[]'); } catch(e) {}
+  return { scores: local, source: 'local' };
+}
+
+/* ============================================
+   SVG HEROES (menus)
+============================================ */
+function heroSVG(type, size) {
+  if (type === 'spidey') {
+    // Classic masked Spider-Man with web pattern and big white eyes
+    return `<svg viewBox="0 0 200 220" width="${size}" height="${size}">
+      <!-- Body -->
+      <rect x="55" y="125" width="90" height="80" rx="14" fill="#e62429" stroke="#000" stroke-width="5"/>
+      <rect x="58" y="128" width="84" height="20" fill="#1565c0" stroke="#000" stroke-width="3"/>
+      <line x1="100" y1="128" x2="100" y2="200" stroke="#000" stroke-width="2"/>
+      <!-- Body web pattern -->
+      <path d="M62 145 Q100 155 138 145" stroke="#000" stroke-width="1.2" fill="none" opacity=".6"/>
+      <path d="M62 165 Q100 175 138 165" stroke="#000" stroke-width="1.2" fill="none" opacity=".6"/>
+      <!-- Spider emblem -->
+      <circle cx="100" cy="160" r="6" fill="#000"/>
+      <line x1="100" y1="155" x2="92" y2="148" stroke="#000" stroke-width="2"/>
+      <line x1="100" y1="155" x2="108" y2="148" stroke="#000" stroke-width="2"/>
+      <line x1="100" y1="166" x2="92" y2="172" stroke="#000" stroke-width="2"/>
+      <line x1="100" y1="166" x2="108" y2="172" stroke="#000" stroke-width="2"/>
+      <!-- Head/Mask -->
+      <ellipse cx="100" cy="80" rx="60" ry="62" fill="#e62429" stroke="#000" stroke-width="5"/>
+      <!-- Web pattern on mask -->
+      <g stroke="#000" stroke-width="1.2" fill="none" opacity=".6">
+        <path d="M100 22 L100 138"/>
+        <path d="M42 80 L158 80"/>
+        <path d="M55 38 L145 122"/>
+        <path d="M55 122 L145 38"/>
+        <ellipse cx="100" cy="80" rx="22" ry="20"/>
+        <ellipse cx="100" cy="80" rx="40" ry="38"/>
+        <ellipse cx="100" cy="80" rx="55" ry="55"/>
+      </g>
+      <!-- Big iconic almond eyes -->
+      <path d="M35 75 Q55 50 80 60 Q90 70 85 92 Q80 108 55 105 Q35 96 35 75 Z" fill="#000" stroke="#fff" stroke-width="3.5"/>
+      <path d="M165 75 Q145 50 120 60 Q110 70 115 92 Q120 108 145 105 Q165 96 165 75 Z" fill="#000" stroke="#fff" stroke-width="3.5"/>
+      <path d="M42 78 Q58 60 76 65 Q84 75 80 90 Q74 102 56 98 Q42 92 42 78 Z" fill="#fff"/>
+      <path d="M158 78 Q142 60 124 65 Q116 75 120 90 Q126 102 144 98 Q158 92 158 78 Z" fill="#fff"/>
+      <!-- Eye highlights -->
+      <ellipse cx="55" cy="76" rx="6" ry="8" fill="#bbdefb" opacity=".7"/>
+      <ellipse cx="145" cy="76" rx="6" ry="8" fill="#bbdefb" opacity=".7"/>
+    </svg>`;
+  }
+  if (type === 'miles') {
+    return `<svg viewBox="0 0 200 220" width="${size}" height="${size}">
+      <rect x="55" y="125" width="90" height="80" rx="14" fill="#1a1a1a" stroke="#000" stroke-width="5"/>
+      <rect x="55" y="125" width="90" height="22" fill="#c62828" stroke="#000" stroke-width="3"/>
+      <circle cx="100" cy="170" r="7" fill="#c62828"/>
+      <ellipse cx="100" cy="80" rx="60" ry="62" fill="#1a1a1a" stroke="#000" stroke-width="5"/>
+      <path d="M40 80 Q100 30 160 80 Q160 50 100 28 Q40 50 40 80 Z" fill="#c62828" stroke="#000" stroke-width="3"/>
+      <ellipse cx="68" cy="88" rx="22" ry="28" fill="#000" stroke="#c62828" stroke-width="3"/>
+      <ellipse cx="132" cy="88" rx="22" ry="28" fill="#000" stroke="#c62828" stroke-width="3"/>
+      <ellipse cx="68" cy="88" rx="17" ry="22" fill="#fff"/>
+      <ellipse cx="132" cy="88" rx="17" ry="22" fill="#fff"/>
+    </svg>`;
+  }
+  // ghost
+  return `<svg viewBox="0 0 200 220" width="${size}" height="${size}">
+    <rect x="55" y="125" width="90" height="80" rx="14" fill="#fff" stroke="#000" stroke-width="5"/>
+    <path d="M55 125 L100 145 L145 125 L145 175 L100 200 L55 175 Z" fill="#7b1fa2" stroke="#000" stroke-width="3" opacity=".9"/>
+    <circle cx="100" cy="160" r="7" fill="#000"/>
+    <path d="M15 95 Q15 30 100 22 Q185 30 185 95 Q175 70 100 65 Q25 70 15 95 Z" fill="#7b1fa2" stroke="#000" stroke-width="4"/>
+    <ellipse cx="100" cy="100" rx="62" ry="68" fill="#fff" stroke="#000" stroke-width="5"/>
+    <path d="M28 90 Q22 130 35 165 Q50 145 55 110 Q45 95 28 90 Z" fill="#7b1fa2" stroke="#000" stroke-width="3"/>
+    <path d="M172 90 Q178 130 165 165 Q150 145 145 110 Q155 95 172 90 Z" fill="#7b1fa2" stroke="#000" stroke-width="3"/>
+    <path d="M32 95 Q50 75 78 85 Q88 100 82 120 Q70 130 45 125 Q30 115 32 95 Z" fill="#ec407a" stroke="#000" stroke-width="2.5"/>
+    <path d="M168 95 Q150 75 122 85 Q112 100 118 120 Q130 130 155 125 Q170 115 168 95 Z" fill="#ec407a" stroke="#000" stroke-width="2.5"/>
+    <path d="M40 98 Q54 84 74 92 Q82 102 76 116 Q66 122 48 118 Q38 112 40 98 Z" fill="#fff"/>
+    <path d="M160 98 Q146 84 126 92 Q118 102 124 116 Q134 122 152 118 Q162 112 160 98 Z" fill="#fff"/>
+  </svg>`;
+}
+
+function buildTitleHeroes() {
+  document.getElementById('heroTrio').innerHTML =
+    `<div class="hero-slot">${heroSVG('miles', 60)}</div>
+     <div class="hero-slot">${heroSVG('spidey', 64)}</div>
+     <div class="hero-slot">${heroSVG('ghost', 60)}</div>`;
+}
+
+function buildCharSelect() {
+  const grid = document.getElementById('charGrid');
+  const chars = [
+    { id: 0, type: 'miles', name: 'NIGHT', power: '⚡ TELEPORT UP' },
+    { id: 1, type: 'spidey', name: 'JONAH', power: '🕒 SLOW TIME', special: true },
+    { id: 2, type: 'ghost', name: 'GHOST', power: '🎂 CAKE STORM' }
+  ];
+  grid.innerHTML = '';
+  chars.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'char-card';
+    if (c.id === selectedChar) card.classList.add('selected');
+    card.dataset.id = c.id;
+    card.innerHTML = `${c.special ? '<div class="badge">★ HERO</div>' : ''}${heroSVG(c.type, 90)}<div class="name">${c.name}</div><div class="pwr">${c.power}</div>`;
+    card.onclick = () => selectChar(c.id);
+    grid.appendChild(card);
+  });
+}
+
+function selectChar(id) {
+  selectedChar = id;
+  document.querySelectorAll('.char-card').forEach(el => el.classList.toggle('selected', +el.dataset.id === id));
+  checkStartReady();
+}
+
+document.getElementById('initialsInput').addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+  playerInitials = e.target.value;
+  // Save initials so they persist
+  if (playerInitials.length >= 1) localStorage.setItem('jonah_initials', playerInitials);
+  checkStartReady();
+});
+
+function checkStartReady() {
+  const ok = selectedChar !== null && playerInitials.length >= 1;
+  const btn = document.getElementById('startBtn');
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '.5';
+}
+
+function showScreen(id) {
+  // Hide all in-frame screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // Hide all fullscreen pages
+  document.querySelectorAll('.fullscreen-screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+}
+async function goLeaderboard() {
+  // Show leaderboard fullscreen page; transfer score
+  const finalScore = (game ? game.score : 0);
+  const finalCakes = (game ? game.cakesCollected : 0);
+  document.getElementById('lbFinalScore').textContent = finalScore;
+  showScreen('lbScreen');
+  // Show loading state
+  const list = document.getElementById('lbList');
+  const status = document.getElementById('lbStatus');
+  list.innerHTML = '<div class="lb-empty">Loading scores...</div>';
+  status.textContent = '';
+  // Defensive: ensure the score is submitted (no-op if already pushed)
+  if (finalScore > 0 && playerInitials) {
+    await submitScore(finalScore, finalCakes);
+  }
+  // Small delay so Firebase indexes the new write
+  await new Promise(r => setTimeout(r, 400));
+  await renderLeaderboard(finalScore);
+}
+function goWinInvite() {
+  showScreen('winScreen');
+}
+function goCharSelect() {
+  ensureAudio();
+  buildCharSelect();
+  // Restore initials
+  const saved = localStorage.getItem('jonah_initials') || '';
+  if (saved) {
+    document.getElementById('initialsInput').value = saved;
+    playerInitials = saved;
+    checkStartReady();
+  }
+  showScreen('charScreen');
+}
+function startGame() {
+  if (selectedChar === null || !playerInitials) return;
+  ensureAudio();
+  // Start music IMMEDIATELY in the user gesture so iOS lets it play
+  startMusic();
+  showScreen('gameScreen');
+  initGame();
+}
+function restartGame() {
+  document.getElementById('gameOverOverlay').classList.remove('active');
+  ensureAudio();
+  startMusic();
+  initGame();
+}
+function restartFromTitle() {
+  stopMusic();
+  showScreen('titleScreen');
+}
+async function showLeaderboardOnly() {
+  document.getElementById('finalScore').textContent = '—';
+  await renderLeaderboard(0);
+  showScreen('winScreen');
+}
+
+/* ============================================
+   GAME PHYSICS — AUTO-RUNNER STYLE
+============================================ */
+const G = {
+  RUN_SPEED: 5.5,           // constant horizontal speed
+  GRAVITY: 0.6,
+  SWING_FORCE: 0.8,         // upward pull while holding
+  LEAP_VY: -11,             // upward burst on release
+  LEAP_VX_BOOST: 1.5,
+  CAKES_TO_WIN: 8,
+  HORIZON_Y_RATIO: 0.62,    // where buildings sit (lower = higher buildings)
+  PLAYER_BASE_Y_RATIO: 0.55,
+  WEB_ANCHOR_HEIGHT_RATIO: 0.18, // anchors way up high
+  TAP_GRAB_RADIUS: 50,      // tap to grab cakes
+  AUTO_GRAB_RADIUS: 55,     // auto-grab when you fly through
+  MAX_FALL: 14
+};
+
+function initGame() {
+  canvas = document.getElementById('gameCanvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  if (!window._listenersBound) {
+    window.addEventListener('resize', resizeCanvas);
+    window._listenersBound = true;
+  }
+  game = {
+    player: {
+      x: 100, y: logicalH * G.PLAYER_BASE_Y_RATIO,
+      vx: G.RUN_SPEED, vy: 0,
+      angle: 0, alive: true,
+      onGround: false,
+      // intro state
+      mode: 'intro', // 'intro' | 'running' | 'swinging' | 'flying' | 'dead'
+      introT: 0,
+      runFrame: 0
+    },
+    web: null,
+    isHolding: false,
+    cameraX: 0,
+    cakes: [],
+    obstacles: [],
+    pickups: [], // ice cream power-ups
+    buildings: [],
+    skyscrapers: [],
+    clouds: [],
+    sparkles: [],
+    bursts: [],
+    speedLines: [],
+    cakesCollected: 0,
+    score: 0,
+    distance: 0,
+    won: false,
+    nextObstacleX: 1200,
+    nextCakeX: 800,
+    nextPickupX: 2000,
+    t: 0,
+    // Power
+    powerCharge: 0, // 0-100
+    powerActive: false,
+    powerTimer: 0,
+    powerUsed: false,
+    timeScale: 1,
+    extraCakesTimer: 0,
+    inviteUnlocked: false
+  };
+  spawnInitialContent();
+
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
+  document.getElementById('powerMeter').onclick = activatePower;
+
+  document.getElementById('tutorial').classList.remove('hidden');
+  setTimeout(() => document.getElementById('tutorial').classList.add('hidden'), 4500);
+  document.getElementById('cakeCount').textContent = '0';
+  document.getElementById('scoreCount').textContent = '0';
+  document.getElementById('distCount').textContent = '0';
+  document.getElementById('gameOverOverlay').classList.remove('active');
+  document.getElementById('powerFill').style.width = '0%';
+  document.getElementById('powerMeter').classList.remove('ready');
+  document.getElementById('powerLabel').textContent = getPowerName();
+
+  startMusic();
+
+  if (rafId) cancelAnimationFrame(rafId);
+  loop();
+}
+
+function getPowerName() {
+  if (selectedChar === 0) return '⚡ TELEPORT';
+  if (selectedChar === 1) return '🕒 SLOW TIME';
+  return '🎂 CAKE STORM';
+}
+
+function resizeCanvas() {
+  if (!canvas) return;
+  const wrap = canvas.parentElement;
+  logicalW = wrap.clientWidth;
+  logicalH = wrap.clientHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = logicalW * dpr;
+  canvas.height = logicalH * dpr;
+  canvas.style.width = logicalW + 'px';
+  canvas.style.height = logicalH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function spawnInitialContent() {
+  for (let i = 0; i < 12; i++) {
+    game.clouds.push({ x: Math.random() * 2400, y: 30 + Math.random() * 130, w: 50 + Math.random() * 70, speed: .2 + Math.random() * .4 });
+  }
+  // Tall background skyscrapers (web anchors live near their tops)
+  let sx = 0;
+  while (sx < 4500) {
+    addSkyscraper(sx);
+    sx += 180 + Math.random() * 140;
+  }
+  let bx = 0;
+  while (bx < 4000) {
+    addBuilding(bx);
+    bx += 130 + Math.random() * 80;
+  }
+  let cx = 600;
+  for (let i = 0; i < 4; i++) {
+    spawnCake(cx, false);
+    cx += 320 + Math.random() * 100;
+  }
+  game.nextCakeX = cx;
+}
+
+function addSkyscraper(x) {
+  // Big tall background tower — its top sits above where web anchors generate
+  const colors = ['#37474f','#455a64','#546e7a','#5d4037','#3e2723','#1a237e','#283593','#4527a0','#263238'];
+  const anchorY = logicalH * G.WEB_ANCHOR_HEIGHT_RATIO; // ~0.18
+  // Top sits between 0 and just above anchorY so anchors visually attach to building tops
+  const topY = Math.max(20, anchorY - 60 + Math.random() * 70);
+  const w = 80 + Math.random() * 110;
+  const h = logicalH - topY;
+  game.skyscrapers.push({
+    x: x, y: topY,
+    w: w, h: h,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rooftopType: Math.floor(Math.random() * 4) // 0:flat, 1:antenna, 2:water tower, 3:pyramid
+  });
+}
+
+function addBuilding(x) {
+  const colors = ['#ff8a65','#ffb74d','#fff176','#aed581','#4fc3f7','#ba68c8','#f06292','#fff','#90caf9'];
+  // Keep buildings tall - they go up high so web anchors are above them
+  const buildingTop = logicalH * G.HORIZON_Y_RATIO;
+  const h = logicalH - buildingTop + 40 + Math.random() * 20; // tall
+  game.buildings.push({
+    x: x, y: buildingTop - 20 + Math.random() * 30,
+    w: 90 + Math.random() * 60, h: h,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    windows: Math.floor(Math.random() * 3) + 2
+  });
+}
+
+function spawnCake(x, slime) {
+  // Cakes positioned along the swing arc: between web anchor and player base
+  const playerY = logicalH * G.PLAYER_BASE_Y_RATIO;
+  const anchorY = logicalH * G.WEB_ANCHOR_HEIGHT_RATIO;
+  // Random spot in upper swing zone
+  const y = anchorY + 40 + Math.random() * (playerY - anchorY - 20);
+  game.cakes.push({
+    x: x, y: y,
+    collected: false, bob: Math.random() * Math.PI * 2,
+    slime: !!slime
+  });
+}
+
+function maintainContent() {
+  // Skyscrapers ahead
+  let furthestS = 0;
+  game.skyscrapers.forEach(s => { if (s.x > furthestS) furthestS = s.x; });
+  while (furthestS < game.player.x + 3000) {
+    furthestS += 180 + Math.random() * 140;
+    addSkyscraper(furthestS);
+  }
+  game.skyscrapers = game.skyscrapers.filter(s => s.x > game.cameraX - 400);
+  // Buildings ahead
+  let furthestB = 0;
+  game.buildings.forEach(b => { if (b.x > furthestB) furthestB = b.x; });
+  while (furthestB < game.player.x + 2500) {
+    furthestB += 130 + Math.random() * 80;
+    addBuilding(furthestB);
+  }
+  game.buildings = game.buildings.filter(b => b.x > game.cameraX - 300);
+
+  game.clouds.forEach(c => {
+    if (c.x < game.cameraX - 300) c.x = game.cameraX + logicalW + Math.random() * 300;
+  });
+
+  // Spawn cakes ahead — only if we still need to win OR for endless after win
+  if (game.cakesCollected < G.CAKES_TO_WIN + 20 && game.player.x > game.nextCakeX - logicalW) {
+    // 25% chance of slime as difficulty rises
+    const slimeChance = Math.min(0.3, game.cakesCollected * 0.04);
+    spawnCake(game.nextCakeX, Math.random() < slimeChance);
+    game.nextCakeX += 280 + Math.random() * 180;
+  }
+
+  // Extra cakes during Ghost power
+  if (game.extraCakesTimer > 0 && Math.random() < 0.15) {
+    spawnCake(game.player.x + 200 + Math.random() * 600, false);
+  }
+
+  // Obstacles ramp up
+  if (game.cakesCollected >= 1 && game.player.x > game.nextObstacleX && !game.won) {
+    spawnObstacle();
+    const baseGap = 600;
+    const reduction = Math.min(250, game.cakesCollected * 35);
+    game.nextObstacleX = game.player.x + baseGap - reduction + Math.random() * 300;
+  }
+
+  // Pickup ice cream
+  if (game.player.x > game.nextPickupX && !game.won) {
+    const playerY = logicalH * G.PLAYER_BASE_Y_RATIO;
+    const anchorY = logicalH * G.WEB_ANCHOR_HEIGHT_RATIO;
+    const y = anchorY + 30 + Math.random() * (playerY - anchorY);
+    game.pickups.push({ x: game.player.x + logicalW + 100, y, t: 0, collected: false });
+    game.nextPickupX = game.player.x + 1500 + Math.random() * 1000;
+  }
+}
+
+function spawnObstacle() {
+  const c = game.cakesCollected;
+  // Pool of obstacle types unlocking with cakes
+  const pool = ['bird'];
+  if (c >= 2) pool.push('plane');
+  if (c >= 3) pool.push('drone');
+  if (c >= 5) pool.push('piano');
+  const type = pool[Math.floor(Math.random() * pool.length)];
+
+  const playerY = logicalH * G.PLAYER_BASE_Y_RATIO;
+  const anchorY = logicalH * G.WEB_ANCHOR_HEIGHT_RATIO;
+
+  if (type === 'bird') {
+    game.obstacles.push({ type, x: game.player.x + logicalW + 50, y: anchorY + 50 + Math.random() * 200, vx: -1.5, vy: 0, t: 0, r: 16 });
+  } else if (type === 'plane') {
+    game.obstacles.push({ type, x: game.player.x + logicalW + 100, y: anchorY + 30 + Math.random() * 150, vx: -3.5, vy: 0, t: 0, r: 22 });
+  } else if (type === 'drone') {
+    game.obstacles.push({ type, x: game.player.x + logicalW + 80, y: anchorY + 60 + Math.random() * 200, vx: -1, vy: 0, t: 0, r: 16, homing: true });
+  } else if (type === 'piano') {
+    // Falls from top
+    game.obstacles.push({ type, x: game.player.x + 300 + Math.random() * 400, y: -60, vx: 0, vy: 0, t: 0, r: 30, falling: true });
+  }
+}
+
+/* INPUT */
+function onPointerDown(e) {
+  e.preventDefault();
+  ensureAudio();
+  if (!game) return;
+  if (!game.player.alive || game.won) return;
+  if (game.player.mode === 'intro') return;
+
+  // Check if tap landed on a cake
+  const rect = canvas.getBoundingClientRect();
+  const tapX = (e.clientX - rect.left) + game.cameraX;
+  const tapY = (e.clientY - rect.top);
+  let tappedCake = false;
+  game.cakes.forEach(c => {
+    if (c.collected) return;
+    if (Math.hypot(tapX - c.x, tapY - c.y) < G.TAP_GRAB_RADIUS) {
+      collectCake(c);
+      tappedCake = true;
+    }
+  });
+  game.pickups.forEach(p => {
+    if (p.collected) return;
+    if (Math.hypot(tapX - p.x, tapY - p.y) < G.TAP_GRAB_RADIUS) {
+      collectPickup(p);
+    }
+  });
+  if (tappedCake) return; // tap was a grab, don't trigger swing on this tap
+
+  document.getElementById('tutorial').classList.add('hidden');
+
+  // Start swinging — anchor up high (above building tops)
+  startSwing();
+}
+
+function startSwing() {
+  const p = game.player;
+  const anchorX = p.x + 140;
+  const anchorY = logicalH * G.WEB_ANCHOR_HEIGHT_RATIO;
+  const dist = Math.hypot(p.x - anchorX, p.y - anchorY);
+  game.web = { anchorX, anchorY, length: dist };
+  game.isHolding = true;
+  p.mode = 'swinging';
+  game.bursts.push({ x: p.x, y: p.y - 20, text: 'THWIP!', life: 22, color: '#fff' });
+  playSFX('thwip');
+}
+
+function onPointerUp(e) {
+  if (e) e.preventDefault();
+  if (!game) return;
+  if (game.web) {
+    // Release: leap forward+up
+    const p = game.player;
+    p.vy = G.LEAP_VY;
+    p.vx = G.RUN_SPEED + G.LEAP_VX_BOOST;
+    p.mode = 'flying';
+    playSFX('leap');
+    game.bursts.push({ x: p.x, y: p.y - 10, text: 'WHOOSH!', life: 18, color: '#ffeb3b' });
+  }
+  game.web = null;
+  game.isHolding = false;
+}
+
+/* POWER */
+function activatePower() {
+  if (game.powerCharge < 100 || game.powerActive || !game.player.alive || game.won) return;
+  game.powerActive = true;
+  game.powerCharge = 0;
+  game.powerTimer = 240; // ~4s at 60fps
+  document.getElementById('powerFill').style.width = '0%';
+  document.getElementById('powerMeter').classList.remove('ready');
+  playSFX('power');
+  if (selectedChar === 1) {
+    // Slow time
+    game.timeScale = 0.4;
+    game.bursts.push({ x: game.player.x, y: game.player.y - 40, text: 'SLOW-MO!', life: 50, color: '#4fc3f7', big: true });
+  } else if (selectedChar === 0) {
+    // Teleport up + forward
+    const p = game.player;
+    p.y = Math.max(50, logicalH * G.WEB_ANCHOR_HEIGHT_RATIO);
+    p.x += 250;
+    p.vy = -4;
+    p.vx = G.RUN_SPEED + 4;
+    game.bursts.push({ x: p.x, y: p.y, text: 'ZAP!', life: 40, color: '#c62828', big: true });
+    // Sparkle trail
+    for (let i = 0; i < 30; i++) {
+      game.sparkles.push({
+        x: p.x - 200 + Math.random() * 250,
+        y: p.y + (Math.random() - 0.5) * 100,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
+        life: 30,
+        color: ['#c62828', '#fff', '#000'][Math.floor(Math.random() * 3)]
+      });
+    }
+    game.powerTimer = 60; // brief
+  } else if (selectedChar === 2) {
+    // Cake storm
+    game.extraCakesTimer = 240;
+    game.bursts.push({ x: game.player.x, y: game.player.y - 40, text: 'CAKE STORM!', life: 50, color: '#ec407a', big: true });
+    // Spawn instant cakes
+    for (let i = 0; i < 6; i++) {
+      spawnCake(game.player.x + 200 + i * 180, false);
+    }
+    game.powerTimer = 60;
+  }
+}
+
+/* PHYSICS */
+function updatePhysics() {
+  const p = game.player;
+  if (!p.alive) return;
+  const ts = game.timeScale;
+
+  game.t++;
+
+  // INTRO ANIMATION: hero runs in then leaps
+  if (p.mode === 'intro') {
+    p.introT++;
+    p.x += 3 * ts;
+    p.runFrame = (p.runFrame + 0.3 * ts);
+    if (p.introT > 50) {
+      // Auto-trigger first swing
+      p.mode = 'flying';
+      p.vy = -10;
+      p.vx = G.RUN_SPEED + 1;
+      // Auto-start a swing on next frame so user sees the rope
+      setTimeout(() => {
+        if (game && game.player.alive && !game.won && p.mode === 'flying') {
+          startSwing();
+          // Auto-release after a brief moment so user doesn't have to time it
+          setTimeout(() => {
+            if (game && game.web) {
+              const pp = game.player;
+              pp.vy = G.LEAP_VY;
+              pp.vx = G.RUN_SPEED + G.LEAP_VX_BOOST;
+              pp.mode = 'flying';
+              game.web = null;
+              game.isHolding = false;
+              playSFX('leap');
+            }
+          }, 400);
+        }
+      }, 100);
+    }
+    game.cameraX = p.x - logicalW * 0.3;
+    return;
+  }
+
+  // Power countdown
+  if (game.powerActive) {
+    game.powerTimer -= ts;
+    if (game.powerTimer <= 0) {
+      game.powerActive = false;
+      game.timeScale = 1;
+    }
+  }
+  if (game.extraCakesTimer > 0) game.extraCakesTimer -= ts;
+
+  // Charge power over time/distance
+  if (!game.powerActive && game.powerCharge < 100) {
+    game.powerCharge = Math.min(100, game.powerCharge + 0.18 * ts);
+    document.getElementById('powerFill').style.width = game.powerCharge + '%';
+    if (game.powerCharge >= 100) {
+      document.getElementById('powerMeter').classList.add('ready');
+      document.getElementById('powerLabel').textContent = '⚡ TAP HERE!';
+    }
+  }
+
+  // Auto-runner: maintain forward velocity
+  if (p.mode === 'flying' || p.mode === 'running') {
+    // Constant forward speed when not swinging
+    if (p.vx < G.RUN_SPEED) p.vx = G.RUN_SPEED;
+    // Air drag horizontal
+    p.vx *= 0.995;
+  }
+
+  // Gravity
+  if (!game.web) {
+    p.vy += G.GRAVITY * ts;
+    if (p.vy > G.MAX_FALL) p.vy = G.MAX_FALL;
+  } else {
+    // Holding swing - apply upward force
+    p.vy -= G.SWING_FORCE * ts;
+  }
+
+  p.x += p.vx * ts;
+  p.y += p.vy * ts;
+
+  // Web rope constraint (keeps player on the arc)
+  if (game.web) {
+    const dx = p.x - game.web.anchorX;
+    const dy = p.y - game.web.anchorY;
+    const dist = Math.hypot(dx, dy);
+    if (dist > game.web.length) {
+      const f = game.web.length / dist;
+      p.x = game.web.anchorX + dx * f;
+      p.y = game.web.anchorY + dy * f;
+      // Remove outward velocity
+      const nx = dx / dist, ny = dy / dist;
+      const radial = p.vx * nx + p.vy * ny;
+      if (radial > 0) {
+        p.vx -= radial * nx;
+        p.vy -= radial * ny;
+      }
+    }
+    // Anchor moves with player — re-anchor periodically so they keep going
+    if (p.x > game.web.anchorX + 50) {
+      game.web.anchorX = p.x + 100;
+      game.web.length = Math.hypot(p.x - game.web.anchorX, p.y - game.web.anchorY);
+    }
+  }
+
+  // Don't fall below the building tops in normal play
+  const buildingTop = logicalH * G.HORIZON_Y_RATIO;
+  if (p.y > buildingTop - 30 && p.vy > 0) {
+    p.y = buildingTop - 30;
+    p.vy = -p.vy * 0.4; // soft bounce
+    if (Math.abs(p.vy) < 2) p.vy = -3;
+    p.mode = 'flying';
+  }
+
+  // Update angle
+  p.angle = Math.atan2(p.vy, p.vx) * 0.4;
+
+  // Camera
+  game.cameraX = p.x - logicalW * 0.3;
+
+  game.distance = Math.floor(p.x / 10);
+  document.getElementById('distCount').textContent = game.distance;
+
+  // Auto-grab cakes
+  game.cakes.forEach(c => {
+    if (c.collected) return;
+    c.bob += 0.05 * ts;
+    if (Math.hypot(p.x - c.x, p.y - c.y) < G.AUTO_GRAB_RADIUS) {
+      collectCake(c);
+    }
+  });
+
+  // Score
+  game.score = game.cakesCollected * 100 + Math.floor(game.distance / 2);
+  document.getElementById('scoreCount').textContent = game.score;
+
+  // Pickups
+  game.pickups.forEach(pk => {
+    if (pk.collected) return;
+    pk.t++;
+    if (Math.hypot(p.x - pk.x, p.y - pk.y) < G.AUTO_GRAB_RADIUS) {
+      collectPickup(pk);
+    }
+  });
+  game.pickups = game.pickups.filter(pk => pk.x > game.cameraX - 200);
+
+  // Obstacles
+  game.obstacles.forEach(o => {
+    o.t++;
+    if (o.type === 'drone' && o.homing) {
+      const dx = p.x - o.x, dy = p.y - o.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 0) { o.vx += (dx / d) * 0.04 * ts; o.vy += (dy / d) * 0.04 * ts; }
+      o.vx = Math.max(-3, Math.min(2, o.vx));
+      o.vy = Math.max(-2, Math.min(2, o.vy));
+    } else if (o.type === 'bird') {
+      o.y += Math.sin(o.t * 0.05) * 0.5;
+    } else if (o.type === 'piano' && o.falling) {
+      o.vy += 0.4 * ts;
+    } else if (o.type === 'laser') {
+      // Telegraph then activate
+      if (o.telegraph > 0) {
+        o.telegraph -= ts;
+        if (o.telegraph <= 0) o.active = true;
+      }
+      if (o.active) {
+        o.activeT = (o.activeT || 0) + ts;
+        if (o.activeT > 90) {
+          // expire
+          o.expired = true;
+        }
+      }
+    }
+    o.x += o.vx * ts;
+    o.y += o.vy * ts;
+    // Collision
+    if (o.type === 'laser') {
+      if (o.active && Math.abs(p.x - o.x) < 12) {
+        hitObstacle(o);
+      }
+    } else if (o.type === 'piano' && o.y > logicalH + 50) {
+      o.expired = true;
+    } else {
+      if (Math.hypot(p.x - o.x, p.y - o.y) < (o.r || 18) + 18) {
+        hitObstacle(o);
+      }
+    }
+  });
+  game.obstacles = game.obstacles.filter(o => !o.expired && o.x > game.cameraX - 200 && o.x < game.cameraX + logicalW + 800);
+
+  // Sparkles + bursts
+  game.sparkles.forEach(s => { s.x += s.vx * ts; s.y += s.vy * ts; s.vy += 0.3 * ts; s.life -= ts; });
+  game.sparkles = game.sparkles.filter(s => s.life > 0);
+  game.bursts.forEach(b => { b.life -= ts; b.y -= 1 * ts; });
+  game.bursts = game.bursts.filter(b => b.life > 0);
+
+  // Speed lines
+  if (Math.hypot(p.vx, p.vy) > 9 && Math.random() < 0.4) {
+    game.speedLines.push({
+      x: game.cameraX + Math.random() * logicalW,
+      y: Math.random() * logicalH,
+      len: 20 + Math.random() * 30,
+      life: 8
+    });
+  }
+  game.speedLines.forEach(l => l.life--);
+  game.speedLines = game.speedLines.filter(l => l.life > 0);
+
+  if (p.y > logicalH + 100) {
+    p.alive = false;
+    showGameOver(false);
+  }
+
+  maintainContent();
+}
+
+function collectCake(c) {
+  if (c.collected) return;
+  c.collected = true;
+  if (c.slime) {
+    // Penalty
+    game.score = Math.max(0, game.score - 50);
+    playSFX('slime');
+    game.bursts.push({ x: c.x, y: c.y - 20, text: 'YUCK -50!', life: 30, color: '#388e3c' });
+    for (let i = 0; i < 10; i++) {
+      game.sparkles.push({
+        x: c.x, y: c.y,
+        vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+        life: 25, color: ['#388e3c', '#7cb342', '#558b2f'][Math.floor(Math.random() * 3)]
+      });
+    }
+    return;
+  }
+  // Real cake
+  game.cakesCollected++;
+  game.score += 100;
+  const cakeEl = document.getElementById('cakeCount');
+  if (game.cakesCollected >= G.CAKES_TO_WIN) {
+    cakeEl.textContent = '★';
+    cakeEl.parentElement.style.background = 'linear-gradient(90deg,#ffeb3b,#ff8f00)';
+    cakeEl.parentElement.style.color = '#fff';
+  } else {
+    cakeEl.textContent = game.cakesCollected;
+  }
+  for (let i = 0; i < 14; i++) {
+    game.sparkles.push({
+      x: c.x, y: c.y,
+      vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8 - 2,
+      life: 30, color: ['#ffeb3b', '#ff6f00', '#fff', '#e62429'][Math.floor(Math.random() * 4)]
+    });
+  }
+  game.bursts.push({ x: c.x, y: c.y - 20, text: '+100!', life: 30, color: '#ffeb3b' });
+  playSFX('cake');
+  // First time hitting 8 cakes: unlock the invite + brief celebration, but KEEP PLAYING
+  if (game.cakesCollected === G.CAKES_TO_WIN && !game.inviteUnlocked) {
+    game.inviteUnlocked = true;
+    playSFX('win');
+    const pop = document.getElementById('invitePopup');
+    pop.classList.add('show');
+    setTimeout(() => pop.classList.remove('show'), 2200);
+    // Show "KEEP GOING" message
+    game.bursts.push({ x: game.player.x, y: game.player.y - 60, text: 'INVITE UNLOCKED!', life: 70, color: '#ffeb3b', big: true });
+    setTimeout(() => {
+      if (game && game.player.alive) {
+        game.bursts.push({ x: game.player.x, y: game.player.y - 60, text: 'KEEP GOING FOR HIGH SCORE!', life: 90, color: '#ff5252', big: true });
+      }
+    }, 2400);
+    // Bonus reward for hitting the milestone
+    game.score += 500;
+  }
+}
+
+function collectPickup(p) {
+  p.collected = true;
+  game.score += 250;
+  game.bursts.push({ x: p.x, y: p.y - 20, text: '+250 BONUS!', life: 30, color: '#ec407a' });
+  playSFX('power');
+  // Charge power instantly
+  game.powerCharge = 100;
+  document.getElementById('powerFill').style.width = '100%';
+  document.getElementById('powerMeter').classList.add('ready');
+  document.getElementById('powerLabel').textContent = '⚡ TAP HERE!';
+  for (let i = 0; i < 16; i++) {
+    game.sparkles.push({
+      x: p.x, y: p.y,
+      vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+      life: 30, color: ['#ec407a', '#ba68c8', '#fff', '#4fc3f7'][Math.floor(Math.random() * 4)]
+    });
+  }
+}
+
+function hitObstacle(o) {
+  const p = game.player;
+  if (!p.alive) return;
+  for (let i = 0; i < 22; i++) {
+    game.sparkles.push({
+      x: p.x, y: p.y,
+      vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+      life: 25, color: ['#ff5252', '#ff8f00', '#ffeb3b', '#000'][Math.floor(Math.random() * 4)]
+    });
+  }
+  game.bursts.push({ x: p.x, y: p.y, text: 'BAM!', life: 40, color: '#ff5252', big: true });
+  playSFX('hit');
+  p.alive = false;
+  setTimeout(() => showGameOver(false), 700);
+}
+
+function winGame() {
+  game.won = true;
+  playSFX('win');
+  const pop = document.getElementById('invitePopup');
+  pop.classList.add('show');
+  setTimeout(() => {
+    pop.classList.remove('show');
+    showGameOver(true);
+  }, 2200);
+}
+
+async function showGameOver(won) {
+  game.player.alive = false;
+  stopMusic();
+  // If they hit 8+ cakes at any point, show win screen with final score
+  const showWin = won || game.inviteUnlocked || game.cakesCollected >= G.CAKES_TO_WIN;
+  if (showWin) {
+    document.getElementById('finalScore').textContent = game.score;
+    setTicketAndQR();
+    await submitScore(game.score, game.cakesCollected);
+    await renderLeaderboard(game.score);
+    showScreen('winScreen');
+  } else {
+    const goTitle = document.getElementById('goTitle');
+    const goStats = document.getElementById('goStats');
+    goTitle.textContent = 'OOPS!';
+    goStats.innerHTML = `SCORE: <span class="num">${game.score}</span><br>CAKES: <span class="num">${game.cakesCollected}</span> / ${G.CAKES_TO_WIN}<br><span style="font-size:.85em;color:#ffeb3b">${G.CAKES_TO_WIN - game.cakesCollected} more to unlock the invite!</span>`;
+    await submitScore(game.score, game.cakesCollected);
+    document.getElementById('gameOverOverlay').classList.add('active');
+  }
+}
+
+/* ============================================
+   RENDER
+============================================ */
+function render() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, logicalW, logicalH);
+
+  // Sky
+  const sky = ctx.createLinearGradient(0, 0, 0, logicalH);
+  sky.addColorStop(0, '#4fc3f7');
+  sky.addColorStop(0.6, '#81d4fa');
+  sky.addColorStop(1, '#fff59d');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, logicalW, logicalH);
+
+  // Slow-mo blue tint
+  if (game.powerActive && selectedChar === 1) {
+    ctx.fillStyle = 'rgba(79, 195, 247, 0.2)';
+    ctx.fillRect(0, 0, logicalW, logicalH);
+  }
+
+  // Halftone
+  drawHalftone();
+
+  // Sun
+  ctx.save();
+  const sx = logicalW * 0.85, sy = logicalH * 0.15;
+  const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 90);
+  sg.addColorStop(0, 'rgba(255,245,157,1)');
+  sg.addColorStop(0.5, 'rgba(255,224,130,0.4)');
+  sg.addColorStop(1, 'rgba(255,224,130,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(sx - 90, sy - 90, 180, 180);
+  ctx.fillStyle = '#fff9c4';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(sx, sy, 28, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // Clouds
+  ctx.save();
+  ctx.translate(-game.cameraX * 0.2, 0);
+  game.clouds.forEach(c => {
+    c.x -= c.speed;
+    drawCloud(c.x, c.y, c.w);
+  });
+  ctx.restore();
+
+  // Distant buildings
+  ctx.save();
+  ctx.translate(-game.cameraX * 0.5, 0);
+  game.buildings.forEach(b => {
+    if (b.x < game.cameraX * 0.5 - 200 || b.x > game.cameraX * 0.5 + logicalW + 100) return;
+    drawBuildingDistant(b);
+  });
+  ctx.restore();
+
+  // Tall skyscrapers (mid-back layer, slight parallax)
+  ctx.save();
+  ctx.translate(-game.cameraX * 0.85, 0);
+  game.skyscrapers.forEach(s => {
+    const sx = s.x;
+    if (sx < game.cameraX * 0.85 - 300 || sx > game.cameraX * 0.85 + logicalW + 200) return;
+    drawSkyscraper(s);
+  });
+  ctx.restore();
+
+  // Foreground
+  ctx.save();
+  ctx.translate(-game.cameraX, 0);
+  game.buildings.forEach(b => {
+    if (b.x < game.cameraX - 200 || b.x > game.cameraX + logicalW + 100) return;
+    drawBuilding(b);
+  });
+  game.cakes.forEach(c => { if (!c.collected) drawCake(c); });
+  game.pickups.forEach(p => { if (!p.collected) drawPickup(p); });
+  game.obstacles.forEach(o => drawObstacle(o));
+
+  // Web
+  if (game.web && game.player.alive) {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(game.player.x, game.player.y);
+    ctx.lineTo(game.web.anchorX, game.web.anchorY);
+    ctx.stroke();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(game.player.x, game.player.y);
+    ctx.lineTo(game.web.anchorX, game.web.anchorY);
+    ctx.stroke();
+  }
+
+  if (game.player.alive) drawPlayer(game.player);
+
+  // Sparkles
+  game.sparkles.forEach(s => {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, s.life / 30);
+    ctx.fillStyle = s.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+  // Bursts
+  game.bursts.forEach(b => {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, b.life / 15);
+    ctx.font = `${b.big ? '32px' : '22px'} 'Bangers', cursive`;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = b.color;
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.strokeText(b.text, b.x, b.y);
+    ctx.fillText(b.text, b.x, b.y);
+    ctx.restore();
+  });
+
+  ctx.restore();
+
+  // Speed lines (screen space)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.lineWidth = 2;
+  game.speedLines.forEach(l => {
+    ctx.globalAlpha = l.life / 8;
+    ctx.beginPath();
+    ctx.moveTo(l.x - game.cameraX, l.y);
+    ctx.lineTo(l.x - game.cameraX - l.len, l.y);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawHalftone() {
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = '#000';
+  const size = 8;
+  const offX = (game.cameraX * 0.1) % size;
+  for (let y = -size; y < logicalH + size; y += size) {
+    for (let x = -size; x < logicalW + size; x += size) {
+      ctx.beginPath();
+      ctx.arc(x - offX, y, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawCloud(x, y, w) {
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y, w * 0.35, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.35, y - w * 0.1, w * 0.3, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.6, y, w * 0.32, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.3, y + w * 0.1, w * 0.28, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+function drawBuildingDistant(b) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(60,40,80,0.4)';
+  ctx.fillRect(b.x, b.y + 30, b.w * 0.9, b.h);
+  ctx.restore();
+}
+
+function drawSkyscraper(s) {
+  ctx.save();
+  // Body
+  ctx.fillStyle = s.color;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+  ctx.fillRect(s.x, s.y, s.w, s.h);
+  ctx.strokeRect(s.x, s.y, s.w, s.h);
+  // Right shadow strip (cel-shaded)
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.fillRect(s.x + s.w * 0.72, s.y, s.w * 0.28, s.h);
+  // Left highlight strip
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(s.x, s.y, s.w * 0.12, s.h);
+  // Window grid - tons of yellow-ish lit windows
+  ctx.fillStyle = '#ffeb3b';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1.5;
+  const cols = Math.max(3, Math.floor(s.w / 22));
+  const rows = Math.max(8, Math.floor(s.h / 28));
+  const ww = (s.w / cols) * 0.55;
+  const wh = 12;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // Some windows dark for variation
+      const seed = (s.x * 0.13 + r * 7 + c * 3) % 5;
+      if (seed < 1.2) continue;
+      const wx = s.x + (c + 0.5) * (s.w / cols) - ww / 2;
+      const wy = s.y + 14 + r * (s.h - 20) / rows;
+      if (wy + wh > s.y + s.h - 6) break;
+      ctx.fillStyle = seed > 4 ? '#fff59d' : '#ffeb3b';
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.strokeRect(wx, wy, ww, wh);
+    }
+  }
+  // Roof detail
+  ctx.fillStyle = '#000';
+  ctx.fillRect(s.x - 2, s.y - 6, s.w + 4, 6);
+  if (s.rooftopType === 1) {
+    // Antenna
+    ctx.fillStyle = '#000';
+    ctx.fillRect(s.x + s.w / 2 - 2, s.y - 50, 4, 50);
+    // Red light
+    ctx.fillStyle = '#e62429';
+    ctx.beginPath(); ctx.arc(s.x + s.w / 2, s.y - 52, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (s.rooftopType === 2) {
+    // Water tower
+    ctx.fillStyle = '#5d4037';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.fillRect(s.x + s.w * 0.3, s.y - 28, s.w * 0.4, 22);
+    ctx.strokeRect(s.x + s.w * 0.3, s.y - 28, s.w * 0.4, 22);
+    // Legs
+    ctx.beginPath();
+    ctx.moveTo(s.x + s.w * 0.32, s.y - 6);
+    ctx.lineTo(s.x + s.w * 0.32, s.y);
+    ctx.moveTo(s.x + s.w * 0.68, s.y - 6);
+    ctx.lineTo(s.x + s.w * 0.68, s.y);
+    ctx.stroke();
+  } else if (s.rooftopType === 3) {
+    // Pyramid spire
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(s.x + s.w * 0.2, s.y);
+    ctx.lineTo(s.x + s.w / 2, s.y - 40);
+    ctx.lineTo(s.x + s.w * 0.8, s.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBuilding(b) {
+  ctx.save();
+  ctx.fillStyle = b.color;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.strokeRect(b.x, b.y, b.w, b.h);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(b.x + b.w * 0.7, b.y, b.w * 0.3, b.h);
+  ctx.fillStyle = '#bbdefb';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  const wn = b.windows;
+  const ww = b.w / (wn + 1) * 0.6;
+  const wh = 22;
+  for (let row = 0; row < 6; row++) {
+    for (let col = 0; col < wn; col++) {
+      const wx = b.x + (col + 1) * (b.w / (wn + 1)) - ww / 2;
+      const wy = b.y + 30 + row * 45;
+      if (wy + wh > b.y + b.h - 10) break;
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.strokeRect(wx, wy, ww, wh);
+    }
+  }
+  ctx.fillStyle = '#000';
+  ctx.fillRect(b.x, b.y - 4, b.w, 4);
+  ctx.restore();
+}
+
+function drawCake(c) {
+  ctx.save();
+  ctx.translate(c.x, c.y + Math.sin(c.bob) * 4);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  if (c.slime) {
+    // Slime cake — green oozy
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(0, 18, 28, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7cb342';
+    ctx.fillRect(-22, -2, 44, 20);
+    ctx.strokeRect(-22, -2, 44, 20);
+    // Drips
+    ctx.fillStyle = '#558b2f';
+    ctx.beginPath();
+    ctx.moveTo(-22, -2);
+    ctx.quadraticCurveTo(-15, -14, -8, -2);
+    ctx.quadraticCurveTo(0, -16, 8, -2);
+    ctx.quadraticCurveTo(15, -14, 22, -2);
+    ctx.lineTo(22, 4); ctx.lineTo(-22, 4); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Slime drops
+    ctx.fillStyle = '#7cb342';
+    ctx.beginPath(); ctx.arc(-12, 14, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(10, 16, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Skull
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(-1.5, -11, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(1.5, -11, 1, 0, Math.PI * 2); ctx.fill();
+  } else {
+    // Plate
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(0, 18, 28, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Base
+    ctx.fillStyle = '#f06292';
+    ctx.fillRect(-22, -2, 44, 20);
+    ctx.strokeRect(-22, -2, 44, 20);
+    // Frosting
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(-22, -2);
+    ctx.quadraticCurveTo(-15, -10, -8, -2);
+    ctx.quadraticCurveTo(0, -12, 8, -2);
+    ctx.quadraticCurveTo(15, -10, 22, -2);
+    ctx.lineTo(22, 2); ctx.lineTo(-22, 2); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Candle
+    ctx.fillStyle = '#1565c0';
+    ctx.fillRect(-2, -18, 4, 12);
+    ctx.strokeRect(-2, -18, 4, 12);
+    ctx.fillStyle = '#ffeb3b';
+    ctx.beginPath(); ctx.ellipse(0, -22, 3, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPickup(p) {
+  ctx.save();
+  ctx.translate(p.x, p.y + Math.sin(p.t * 0.05) * 4);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  // Cone
+  ctx.fillStyle = '#ffb74d';
+  ctx.beginPath();
+  ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.lineTo(0, 22); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  // Waffle lines
+  ctx.beginPath();
+  ctx.moveTo(-6, 6); ctx.lineTo(6, 6);
+  ctx.moveTo(-3, 14); ctx.lineTo(3, 14);
+  ctx.stroke();
+  // Rainbow scoops
+  const colors = ['#e62429', '#ff9800', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0'];
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[(i + Math.floor(p.t / 8)) % colors.length];
+    ctx.beginPath(); ctx.arc(0, -8 - i * 8, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  // Sparkle
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px Bangers';
+  ctx.textAlign = 'center';
+  const tw = Math.sin(p.t * 0.1);
+  ctx.globalAlpha = 0.7 + tw * 0.3;
+  ctx.fillText('★', 14 + tw * 4, -22);
+  ctx.fillText('★', -14 - tw * 4, -16);
+  ctx.restore();
+}
+
+function drawObstacle(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 3;
+  if (o.type === 'bird') {
+    const flap = Math.sin(o.t * 0.3) * 12;
+    ctx.fillStyle = '#5d4037';
+    ctx.beginPath(); ctx.ellipse(0, 0, 16, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-12, 0); ctx.quadraticCurveTo(-22, -12 + flap, -14, -4);
+    ctx.moveTo(12, 0); ctx.quadraticCurveTo(22, -12 + flap, 14, -4);
+    ctx.lineWidth = 4; ctx.stroke();
+    ctx.fillStyle = '#ff8f00';
+    ctx.beginPath();
+    ctx.moveTo(-14, 0); ctx.lineTo(-22, -2); ctx.lineTo(-14, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-8, -3, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(-8, -3, 1.5, 0, Math.PI * 2); ctx.fill();
+  } else if (o.type === 'plane') {
+    ctx.fillStyle = '#e62429';
+    ctx.beginPath(); ctx.ellipse(0, 0, 28, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6, -2); ctx.lineTo(-6, -16); ctx.lineTo(6, -16); ctx.lineTo(6, -2); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6, 2); ctx.lineTo(-12, 16); ctx.lineTo(0, 16); ctx.lineTo(6, 2); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(20, -2); ctx.lineTo(28, -12); ctx.lineTo(24, -2); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#bbdefb';
+    ctx.beginPath(); ctx.arc(-8, -2, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else if (o.type === 'drone') {
+    ctx.fillStyle = '#424242';
+    ctx.fillRect(-12, -7, 24, 14);
+    ctx.strokeRect(-12, -7, 24, 14);
+    [[-15, -9], [15, -9], [-15, 9], [15, 9]].forEach(([px, py]) => {
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#212121';
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    ctx.fillStyle = '#e62429';
+    ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else if (o.type === 'laser') {
+    if (o.telegraph > 0) {
+      // Warning flash
+      ctx.strokeStyle = (Math.floor(o.t / 5) % 2) ? '#ffeb3b' : '#e62429';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(0, logicalH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e62429';
+      ctx.font = 'bold 18px Bangers';
+      ctx.textAlign = 'center';
+      ctx.fillText('!', 0, logicalH / 2);
+    } else if (o.active) {
+      // Active laser beam
+      const grad = ctx.createLinearGradient(-8, 0, 8, 0);
+      grad.addColorStop(0, 'rgba(255,82,82,0.2)');
+      grad.addColorStop(0.5, '#ff5252');
+      grad.addColorStop(1, 'rgba(255,82,82,0.2)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(-10, 0, 20, logicalH);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-2, 0, 4, logicalH);
+    }
+  } else if (o.type === 'piano') {
+    // Piano falling
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-30, -20, 60, 40);
+    ctx.strokeRect(-30, -20, 60, 40);
+    // Keys
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-28, -8, 56, 14);
+    ctx.strokeRect(-28, -8, 56, 14);
+    for (let k = -22; k < 28; k += 6) {
+      ctx.beginPath(); ctx.moveTo(k, -8); ctx.lineTo(k, 6); ctx.stroke();
+    }
+    // Black keys
+    ctx.fillStyle = '#000';
+    [-20, -10, 4, 14, 22].forEach(k => ctx.fillRect(k - 2, -8, 4, 8));
+    // Lid
+    ctx.fillStyle = '#3d2817';
+    ctx.beginPath();
+    ctx.moveTo(-30, -20); ctx.lineTo(-20, -28); ctx.lineTo(30, -28); ctx.lineTo(30, -20); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Wind lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-28, -34); ctx.lineTo(-32, -42);
+    ctx.moveTo(0, -34); ctx.lineTo(-4, -42);
+    ctx.moveTo(28, -34); ctx.lineTo(24, -42);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ============================================
+   PLAYER DRAW — body matches face!
+============================================ */
+function drawPlayer(p) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.angle);
+
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 4;
+
+  // Body color depends on character
+  let bodyColor, legColor, accentColor;
+  if (selectedChar === 0) {
+    // Night - black with red top
+    bodyColor = '#1a1a1a';
+    legColor = '#1a1a1a';
+    accentColor = '#c62828';
+  } else if (selectedChar === 2) {
+    // Ghost - white with purple
+    bodyColor = '#fff';
+    legColor = '#fff';
+    accentColor = '#7b1fa2';
+  } else {
+    // Jonah - red top, blue bottom
+    bodyColor = '#e62429';
+    legColor = '#1565c0';
+    accentColor = '#000';
+  }
+
+  // Torso
+  ctx.fillStyle = bodyColor;
+  roundedRect(-18, -6, 36, 26, 6);
+  ctx.fill(); ctx.stroke();
+
+  // Accent stripe on torso (different per char)
+  if (selectedChar === 0) {
+    // Red stripe at top
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(-18, -6, 36, 8);
+    ctx.strokeRect(-18, -6, 36, 8);
+  } else if (selectedChar === 2) {
+    // Purple stripe top
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(-18, -6, 36, 8);
+    ctx.strokeRect(-18, -6, 36, 8);
+  }
+
+  // Legs
+  ctx.fillStyle = legColor;
+  ctx.fillRect(-16, 18, 32, 16);
+  ctx.strokeRect(-16, 18, 32, 16);
+
+  // Spider emblem
+  ctx.fillStyle = (selectedChar === 0) ? '#c62828' : (selectedChar === 2 ? '#000' : '#000');
+  ctx.beginPath(); ctx.arc(0, 8, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 5); ctx.lineTo(-4, 1);
+  ctx.moveTo(0, 5); ctx.lineTo(4, 1);
+  ctx.moveTo(0, 11); ctx.lineTo(-4, 14);
+  ctx.moveTo(0, 11); ctx.lineTo(4, 14);
+  ctx.strokeStyle = (selectedChar === 0) ? '#c62828' : '#000';
+  ctx.stroke();
+
+  // Arms
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#000';
+  ctx.fillStyle = bodyColor;
+  if (game.web) {
+    ctx.beginPath();
+    ctx.moveTo(0, -2); ctx.lineTo(8, -22); ctx.lineTo(2, -26); ctx.lineTo(-4, -8); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  } else {
+    // Running animation in intro
+    const sw = Math.sin(p.runFrame || 0) * 4;
+    ctx.beginPath();
+    ctx.moveTo(-16, 0); ctx.lineTo(-22, 12 + sw); ctx.lineTo(-14, 16 + sw); ctx.lineTo(-12, 4); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(16, 0); ctx.lineTo(22, 12 - sw); ctx.lineTo(14, 16 - sw); ctx.lineTo(12, 4); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  }
+
+  // HEAD — distinct per character
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#000';
+
+  if (selectedChar === 1) {
+    // Spider-Man - red mask with web pattern and big white eyes
+    ctx.fillStyle = '#e62429';
+    ctx.beginPath(); ctx.arc(0, -22, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Web pattern lines
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, -44); ctx.lineTo(0, 0);
+    ctx.moveTo(-22, -22); ctx.lineTo(22, -22);
+    ctx.moveTo(-16, -36); ctx.lineTo(16, -8);
+    ctx.moveTo(-16, -8); ctx.lineTo(16, -36);
+    ctx.stroke();
+    // Concentric arcs
+    ctx.beginPath(); ctx.arc(0, -22, 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, -22, 14, 0, Math.PI * 2); ctx.stroke();
+    // Big almond eyes
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(-8, -22, 7, 9, -0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(8, -22, 7, 9, 0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Eye highlight
+    ctx.fillStyle = '#bbdefb';
+    ctx.beginPath(); ctx.ellipse(-9, -25, 2, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(7, -25, 2, 3, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (selectedChar === 0) {
+    // Night - black with red top
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.arc(0, -22, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#c62828';
+    ctx.beginPath();
+    ctx.arc(0, -22, 22, Math.PI, 0);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, -22, 22, Math.PI, 0);
+    ctx.stroke();
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#c62828';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(-7, -20, 5, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(7, -20, 5, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else {
+    // Ghost - white with purple hood
+    ctx.fillStyle = '#7b1fa2';
+    // Hood
+    ctx.beginPath();
+    ctx.arc(0, -24, 24, Math.PI, 0);
+    ctx.fill(); ctx.stroke();
+    // Face
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(0, -22, 19, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Pink masks
+    ctx.fillStyle = '#ec407a';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(-6, -22, 5, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(6, -22, 5, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(-6, -22, 3, 4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(6, -22, 3, 4, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Power active glow
+  if (game.powerActive) {
+    ctx.save();
+    ctx.globalAlpha = 0.5 + Math.sin(game.t * 0.3) * 0.3;
+    ctx.strokeStyle = selectedChar === 1 ? '#4fc3f7' : (selectedChar === 0 ? '#c62828' : '#ec407a');
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, -10, 40, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function roundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function loop() {
+  updatePhysics();
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+
+/* ============================================
+   TICKET / CALENDAR
+============================================ */
+function buildICS() {
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//JonahBirthday//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:' + Date.now() + '@jonah-birthday',
+    'DTSTAMP:20260101T000000Z',
+    'DTSTART:' + PARTY.startUTC,
+    'DTEND:' + PARTY.endUTC,
+    "SUMMARY:Jonah's 2nd Birthday Party",
+    'LOCATION:Wacky Tacky\\, 7351 Galilee Rd #160\\, Roseville\\, CA 95678',
+    "DESCRIPTION:You're invited to Jonah's 2nd Birthday Party! RSVP: 510-435-2135",
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function addToCalendar() {
+  const ics = buildICS();
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'jonahs-birthday.ics';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('📅 Adding to Calendar...');
+}
+
+function setTicketAndQR() {
+  const num = Math.floor(Math.random() * 900000 + 100000);
+  document.getElementById('ticketNum').textContent = `TKT #${num} · ${playerInitials}`;
+}
+
+function showToast(text) {
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.remove('show');
+  void t.offsetWidth;
+  t.classList.add('show');
+}
+
+/* ============================================
+   LEADERBOARD
+============================================ */
+async function renderLeaderboard(yourScore) {
+  const list = document.getElementById('lbList');
+  const status = document.getElementById('lbStatus');
+  const { scores, source } = await fetchScores();
+  if (!scores.length) {
+    list.innerHTML = '<div class="lb-empty">★ BE THE FIRST! ★</div>';
+    status.textContent = source === 'global' ? '🌐 Global · Empty' : '📱 Local only';
+    return;
+  }
+  // Dedupe by initials — keep each player's BEST score
+  const bestByPlayer = {};
+  scores.forEach(s => {
+    if (!s || !s.i) return;
+    const key = s.i.toUpperCase();
+    if (!bestByPlayer[key] || s.s > bestByPlayer[key].s) {
+      bestByPlayer[key] = s;
+    }
+  });
+  const unique = Object.values(bestByPlayer).sort((a, b) => b.s - a.s);
+  // Top 5
+  const top = unique.slice(0, 5);
+  // Find your rank in the deduped list
+  const myKey = (playerInitials || '').toUpperCase();
+  let yourIdx = -1;
+  if (myKey) {
+    for (let i = 0; i < unique.length; i++) {
+      if (unique[i].i.toUpperCase() === myKey) { yourIdx = i; break; }
+    }
+  }
+  let html = '';
+  top.forEach((s, i) => {
+    const isYou = (s.i.toUpperCase() === myKey);
+    const rankCls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+    html += `<div class="lb-row ${isYou ? 'you' : ''}">
+      <div class="lb-rank ${rankCls}">${medal}</div>
+      <div class="lb-init">${escapeHtml(s.i)}</div>
+      <div class="lb-cakes">🎂${s.c}</div>
+      <div class="lb-score">${s.s}</div>
+    </div>`;
+  });
+  // If you're not in the top 5, show your rank below
+  if (yourIdx >= 5) {
+    const s = unique[yourIdx];
+    html += `<div class="lb-row you" style="margin-top:6px;border-top:3px solid #b71c1c;padding-top:10px">
+      <div class="lb-rank">${yourIdx + 1}</div>
+      <div class="lb-init">${escapeHtml(s.i)}</div>
+      <div class="lb-cakes">🎂${s.c}</div>
+      <div class="lb-score">${s.s}</div>
+    </div>`;
+  }
+  list.innerHTML = html;
+  status.textContent = source === 'global' ? '🌐 Global Leaderboard · Top 5' : '📱 Local only · Top 5';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ============================================
+   INIT
+============================================ */
+buildTitleHeroes();
+initFirebase();
+</script>
+</body>
+</html>
